@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}{% if forum %}r/{{ forum.name }}{% else %}r/all{% endif %}{% endblock %}
+
+{% block page_header %}
+  <h2 class="pt-3 pb-3">
+    r/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+  </h2>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+  <div class="col-8">
+  {% for entry in object_list %}
+    {% if entry.published %}
+    <div class="card" style="margin-bottom: 1em;">
+      <div class="card-body" style="margin-left: 40px;">
+        <div style="float: left; margin-left: -50px; width: 40px; text-align: center;">
+            <div>
+              <a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+            </div>
+            <div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+            <div>
+              <a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+            </div>
+        </div>
+
+        <div>
+          {% if forum == None %}
+          <h7 class="card-text" style="float: left;"><a href="{{ url_for('forum', forum=entry.forum.name) }}">r/{{ entry.forum.name }}</a></h7>
+          <h7 class="card-text text-muted" style="float: left;">&nbsp;•&nbsp;</h7>
+          {% endif %}
+          <h7 class="card-text text-muted" style="font-size: 8pt;">Posted by {{ entry.author.username_with_prefix }} <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span></h7>
+        </div>
+
+        <h4 class="card-title">
+          <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
+          {{ entry.title }}
+          </a>
+        </h4>
+        <p class="card-text">{{ entry.html_content }}</p>
+      </div>
+    </div>
+    {% endif %}
+  {% else %}
+    <p>No entries have been created yet.</p>
+  {% endfor %}
+  </div>
+  <div class="col-4">
+     <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Community Details</h6>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-3">r/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}</h6>
+        <div class="card-text" style="word-wrap:break-word;">
+          {% if forum %}
+          <div class="mb-3">
+          <h6>{{ forum.user_count }}</h6>
+          <span class="small">Subscribers</span>
+          </div>
+          {% endif %}
+
+          {% if forum != None %}{{ forum.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
+        </div>
+        <br>
+
+        {% if forum %}
+
+          {% if not forum.current_user_subscribed %}
+          <a href="{{ url_for('forum_subscribe', forum=forum.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+          {% endif %}
+          <a href="{{ url_for('submit', forum=forum.name) }}" class="btn btn-success btn-block">Create Post</a>
+          {% else %}
+          <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
+        {% endif %}
+        
+      </div>
+     </div>
+
+     <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Community Rules</h6>
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">1.1. No hate</li>
+        <li class="list-group-item">2.2. Keep things SFW</li>
+        <li class="list-group-item">3.3. No Advertising</li>
+      </ul>
+      
+     </div>
+
+     {% include "side_footer.html" %}
+  </div>
+  </div>
+
+  {% include "includes/pagination.html" %}
+</div>
+{% endblock %}
+
+{% block js %}
+$('document').ready(function() {
+  $('a.vote-btn').each(function(item) {
+    var self = this;
+    var target = $(this).attr('href');
+    $(this).data('target', target);
+
+    $(this).attr('href', '#');
+    $(this).click(function(e) {
+      e.preventDefault();
+
+      var jqxhr = $.get($(self).data('target'), function(result) {
+        $(self).parent().parent().find('span.vote-counter').text(result);
+      }).fail(function() {
+        console.log("REQ failed");
+      });
+    });
+  });
+});
+{% endblock %}

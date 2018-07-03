@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Create entry{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/selectize.bootstrap4.css') }}">
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<script src="{{ url_for('static', filename='js/selectize.min.js') }}"></script>
+{% endblock %}
+
+
+{% block content %}
+<div class="container pt-3">
+<div class="row">
+  <div class="col-md-8">
+    <h5>Create a Post</h5>
+
+    {% if forum %}
+    <form id="autocomplete" action="#" class="form-horizontal" method="post" data-id="{{ forum.id }}">
+    {% else %}
+    <form id="autocomplete" action="#" class="form-horizontal" method="post">
+    {% endif %}
+
+    <div class="form-group" style="position: relative;">
+        <select class="form-control" id="forum-query" name="forum-query" placeholder="Select a Community...">
+          {% if forum %}
+            <option value="{{ forum.name_with_prefix }}" selected="selected">{{ forum.name_with_prefix }}</option>
+          {% endif %}
+        </select>
+    </div>
+    </form>
+
+    {% if forum %}
+    <form id="new_post" action="{{ url_for('submit', forum=forum.name) }}" class="form-horizontal" method="post" data-id="{{ forum.id }}">
+    {% else %}
+    <form id="new_post" action="{{ url_for('submit') }}" class="form-horizontal" method="post">
+    {% endif %}
+
+    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+     {% if errors %}
+      {%- for msg in errors %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor -%}
+    {% endif %}
+    {% endwith %}
+
+
+    <div class="card mb-3">
+      <div class="card-body">
+          <input type="hidden" id="forum" name="forum" value="{{ forum.name }}">
+
+          <div class="form-group">
+            <input class="form-control" id="title" name="title" type="text" value="{{ entry.title }}" placeholder="Title">
+          </div>
+          <div class="form-group">
+            <textarea class="form-control" id="content" name="content" style="height: 300px;" placeholder="Text (optional)">{{ entry.content }}</textarea>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              {#
+              <div class="checkbox">
+                <label>
+                  <input name="published" type="checkbox" value="y"{% if entry.published %} checked="checked"{% endif %}> Published?
+                </label>
+              </div>
+              #}
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button class="btn btn-primary" type="submit">{% block save_button %}Create{% endblock %}</button>
+            </div>
+          </div>
+        
+
+      </div>
+    </div>
+    </form>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Pnyx Rules</h6>
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">1. Remember the human</li>
+        <li class="list-group-item">2. Behave like you would in real life</li>
+        <li class="list-group-item">3. Look for the original source of content</li>
+        <li class="list-group-item">4. Search for duplicates before posting</li>
+        <li class="list-group-item">5. Read the community’s rules</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block js %}
+$(document).ready(function() {
+  var easyMDE = new EasyMDE({element: $('#content')[0]});
+
+  $('#forum-query').selectize({
+      valueField: 'name',
+      labelField: 'name',
+      searchField: 'name',
+      sortField: 'name',
+      create: false,
+      options: [],
+      persist: true,
+      // loadThrottle: 600,
+      allowEmptyOption: true,
+      maxOptions: 10,
+      /*
+      render: {
+          option: function(item, escape) {
+            console.log(item);
+
+              return '<div>' +
+                  '<span class="title">' +
+                      '<span class="name"><i class="icon ' + (item.fork ? 'fork' : 'source') + '"></i>' + escape(item.name) + '</span>' +
+                      '<span class="by">' + escape(item.username) + '</span>' +
+                  '</span>' +
+                  '<span class="description">' + escape(item.description) + '</span>' +
+                  '<ul class="meta">' +
+                      (item.language ? '<li class="language">' + escape(item.language) + '</li>' : '') +
+                      '<li class="watchers"><span>' + escape(item.watchers) + '</span> watchers</li>' +
+                      '<li class="forks"><span>' + escape(item.forks) + '</span> forks</li>' +
+                  '</ul>' +
+              '</div>';
+          }
+      },
+
+      score: function(search) {
+          var score = this.getScoreFunction(search);
+          return function(item) {
+              return score(item) * (1 + Math.min(item.watchers / 100, 1));
+          };
+      },
+      */
+      load: function(query, callback) {
+          if (!query.length) return callback();
+
+          $.ajax({
+              url: '{{ url_for('community_search') }}',
+              type: 'GET',
+              dataType: 'json',
+              data: {
+                query: query
+              },
+              error: function() {
+                  callback();
+              },
+              success: function(res) {
+                  callback(res.suggestions.slice(0, 10));
+              }
+          });
+      },
+
+      onChange: function(value) {
+        $('#forum').val(value);
+      },
+  });
+
+});
+{% endblock %}

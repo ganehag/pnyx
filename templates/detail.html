@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+{% endblock %}
+
+{% block title %}{{ entry.title }}{% endblock %}
+
+{% block page_header %}
+  <h2 class="pt-3 pb-3">
+  	r/{{ entry.forum.name }}
+  </h2>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<div class="card mb-3">
+		<div class="card-body" style="margin-left: 40px">
+			<div style="float: left; margin-left: -50px; width: 40px; text-align: center;">
+				<div>
+					<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+				</div>
+				<div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+				<div>
+					<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+				</div>
+			</div>
+
+			<h7 class="card-text text-muted" style="font-size: 8pt;">Posted by {{ entry.author.username_with_prefix }} <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span></h7>
+			
+			<h4 class="card-title">{{ entry.title }}</h4>
+			
+			{{ entry.html_content }}
+
+			<div style="text-align: right">
+				<h6 class="card-text text-muted" >{{ entry.vote_percent }}</h6>
+			</div>
+
+			<hr>
+
+			<form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+				<input type="hidden" name="slug" value="{{ entry.slug }}">
+				<input type="hidden" name="parent" value="">
+				<div class="form-group">
+            		<textarea class="form-control" id="content" name="content" placeholder="What are your thoughts?"></textarea>
+          		</div>
+				<div class="text-right mb-3">
+					<button class="btn btn-success">Comment</button>
+				</div>
+			</form>
+		</div>
+	</div>
+	<div>
+		<div class="card">
+			<div id="reply-loc" style="display: none;">
+				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+					<input type="hidden" name="slug" value="{{ entry.slug }}">
+					<input type="hidden" name="parent" value="">
+					<div class="form-group">
+	            		<textarea class="form-control" name="content" placeholder="What are your thoughts?"></textarea>
+	          		</div>
+					<div class="text-right mb-3">
+						<button class="btn btn-success">Comment</button>
+					</div>
+				</form>
+			</div>
+			<div class="card-body">
+				{% for key, reply in entry.comments.items() recursive %}
+				<ul class="comment" style="position: relative;">
+					<li class="mb-4">
+						<div style="float: left; left: -8px; position: absolute; width: 16px; text-align: center; background-color: #FFF;">
+							<a class="comment-vote-btn" href="{{ url_for('comment_upvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+							<a class="comment-vote-btn" href="{{ url_for('comment_downvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+						</div>
+
+						<h6 class="small text-muted">
+							<a href="#">{{ reply.username }}</a> | 
+							<span class="timeago">{{ reply.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span> |
+							Points: <span class="comment-score">{{ reply.score }}</span>
+						</h6>
+						<div class="card-text">
+							{{ reply.content }}
+						</div>
+						<div class="comment-area"></div>
+						<div class="comment-toolbar small">
+							<button type="button" data-id="{{ reply.id }}" class="btn btn-xs btn-link btn-reply text-muted"><i class="fas fa-comment-alt"></i> Reply</button>
+							<button type="button" class="btn btn-xs btn-link btn-share text-muted">Share</button>
+							<button type="button" class="btn btn-xs btn-link btn-report text-muted">Report</button>
+						</div>
+					</li>
+					{%- if reply.comments %}
+					{{ loop(reply.comments.items()) }}
+					{%- endif %}
+				</ul>
+				{% else %}
+				<div class="card-text">No comments, so far.</div>
+				{% endfor %}
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block js %}
+$('document').ready(function() {
+	var easyMDE = new EasyMDE({
+		element: $('#content')[0],
+		minHeight: '100px',
+	});
+
+	$('button.btn-reply').click(function(e) {
+		e.preventDefault();
+
+		var ta = $('#new_reply_template')
+			.clone()
+			.appendTo($(this).parent().siblings().filter('.comment-area'))
+			.addClass('mt-3');
+
+		ta.find('input[name=parent]').val($(this).data('id'));
+
+		console.log($(this).attr('data-id'));
+
+		var reply_mde = new EasyMDE({
+			element: ta.find('textarea[name=content]')[0],
+			minHeight: '100px',
+		});
+
+	});
+
+	$('a.comment-vote-btn').each(function(item) {
+		var self = this;
+		var target = $(this).attr('href');
+		$(this).data('target', target);
+
+		$(this).attr('href', '#');
+		$(this).click(function(e) {
+			e.preventDefault();
+
+			var jqxhr = $.get($(self).data('target'), function(result) {
+				$(self).closest('ul.comment').find('span.comment-score:first').text(result);
+
+				$('#porte-monnaie').trigger('amount');
+			}).fail(function() {
+				
+			});
+		});
+	});
+
+	$('a.vote-btn').each(function(item) {
+		var self = this;
+		var target = $(this).attr('href');
+		$(this).data('target', target);
+
+		$(this).attr('href', '#');
+		$(this).click(function(e) {
+			e.preventDefault();
+
+			var jqxhr = $.get($(self).data('target'), function(result) {
+				$(self).parent().parent().find('span.vote-counter').text(result);
+
+				$('#porte-monnaie').trigger('amount');
+			}).fail(function() {
+				
+			});
+		});
+	});
+});
+{% endblock %}

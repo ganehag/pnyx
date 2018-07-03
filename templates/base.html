@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{% block title %}{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/pnyx.css') }}" />
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/hilite.css') }}" />
+    {% block extra_head %}{% endblock %}
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
+    {% block extra_scripts %}{% endblock %}
+  </head>
+
+  <body>
+    {% block body %}
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light" style="background-color: #FFF; border-bottom: 1px solid #CCC;">
+      <a class="navbar-brand" href="{{ url_for('index') }}">Pnyx</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        
+        <form action="{{ url_for('index') }}" id="search-form" method="get" role="search" class="form-inline my-2 my-lg-0 mr-auto ml-auto">
+          <input class="form-control mr-sm-2" type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown" >
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {% if current_user.is_authenticated %}
+              <div class="float-left mr-2">
+                <i class="fas fa-user-circle fa-lg"></i>
+              </div>
+              <div class="float-left mr-2" style="line-height: 0.9rem;">
+                <div id="nav_username" class="small text-dark" style="margin-top: -0.4rem;">{{ current_user.username }}</div>
+                <span id="porte-monnaie" class="small">{{ current_user.gold_count }}</span> <span class="small">gold</span>
+              </div>
+              {% else %}
+              <i class="fas fa-user"></i>
+              {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+              <div class="dropdown-divider"></div>
+              {% if current_user.is_authenticated %}
+              <a class="dropdown-item" href="{{ url_for('submit') }}">Create Post</a>
+              <a class="dropdown-item" href="{{ url_for('logout') }}">Log out</a>
+              {% else %}
+              <a class="dropdown-item" href="{{ url_for('login') }}">Log in</a>
+              {% endif %}
+            </div>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    {#
+    <div class="container">
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ category }} alert-dismissable">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+          <p>{{ message }}</p>
+        </div>
+      {% endfor %}
+    </div>
+    #}
+
+
+    <div class="container-fluid bg-primary text-white mb-3">
+      <div class="container">
+        <div class="page-header">
+          {% block page_header %}{% endblock %}
+        </div>
+      </div>
+    </div>
+
+
+    <div class="mt-3">
+    {% block content %}{% endblock %}
+    </div>
+
+    {% endblock body %}
+
+      <script type="text/javascript">
+        $(document).ready(function() {
+          $('.timeago').each(function() {
+            $(this).attr('data-timestamp', $(this).text());
+            $(this).text(moment($(this).text()).fromNow());
+          });
+
+          {% if current_user.is_authenticated %}
+            $("#porte-monnaie").on("amount", function(event) {
+              var self = this;
+              var jqxhr = $.get("{{ url_for('user_gold', user=current_user.username) }}", function(result) {
+                $(self).text(result);
+              }).fail(function() {        
+              });
+            });
+          {% endif %}
+        });
+        {% block js %}{% endblock %}
+      </script>
+    </div>
+  </body>
+</html>

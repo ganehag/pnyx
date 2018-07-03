@@ -1,0 +1,57 @@
+body {
+    background-color: #e9f3f5;
+    margin-top: 57px;
+}
+
+.autocomplete {
+    position: absolute;
+    z-index: 100;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+.card-body img {
+    max-width: 100%;
+    height: auto;
+}
+
+ul.autocomplete li {
+    cursor: pointer;
+}
+
+ul.autocomplete li:hover {
+    background-color: #F7F7F7;
+}
+
+ul.comment {
+    border-left: 1px solid #CCC;
+    padding-left: 1.5em;
+}
+
+ul.comment li {
+    list-style: none;
+    margin-left: 0;
+}
+
+.btn-link.btn-xs {
+    font-size: .7rem;
+    padding: .05rem .25rem;
+    line-height: 1;
+    border-radius: .1rem;
+    cursor: pointer;
+}
+
+.login-frame {
+
+}
+
+.login-frame .panel-left {
+    width: 156px;
+    height: 100vh;
+    background-image: url('/static/images/login-side.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
