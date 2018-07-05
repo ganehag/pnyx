@@ -1,74 +1,70 @@
 {% extends "base.html" %}
 
-{% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
-{% endblock %}
-
-{% block extra_scripts %}
-<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
-{% endblock %}
-
 {% block title %}{{ entry.title }}{% endblock %}
 
 {% block page_header %}
+<div class="container-fluid" style="max-width: 1720px;">
   <h2 class="pt-3 pb-3">
-  	r/{{ entry.forum.name }}
+  	<a class="text-light" href="{{ url_for('forum', forum=forum.name) }}">c/{{ entry.forum.name }}</a>
   </h2>
+</div>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-	<div class="card mb-3">
-		<div class="card-body" style="margin-left: 40px">
-			<div style="float: left; margin-left: -50px; width: 40px; text-align: center;">
-				<div>
-					<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+<div class="container-fluid" style="max-width: 1720px;">
+<div class="row">
+
+	<div class="col-md">
+		<div class="card mb-3">
+			<div class="card-body" style="margin-left: 40px">
+				<div style="float: left; margin-left: -50px; width: 40px; text-align: center;">
+					<div>
+						<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+					</div>
+					<div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+					<div>
+						<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+					</div>
 				</div>
-				<div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
-				<div>
-					<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+
+				<h7 class="card-text text-muted" style="font-size: 8pt;">Posted by {{ entry.author.username_with_prefix }} <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span></h7>
+				
+				<h4 class="card-title">{{ entry.title }}</h4>
+				
+				{{ entry.html_content }}
+
+				<div style="text-align: right">
+					<h6 class="card-text text-muted" >{{ entry.vote_percent }}</h6>
 				</div>
-			</div>
 
-			<h7 class="card-text text-muted" style="font-size: 8pt;">Posted by {{ entry.author.username_with_prefix }} <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span></h7>
-			
-			<h4 class="card-title">{{ entry.title }}</h4>
-			
-			{{ entry.html_content }}
+				<hr>
 
-			<div style="text-align: right">
-				<h6 class="card-text text-muted" >{{ entry.vote_percent }}</h6>
-			</div>
-
-			<hr>
-
-			<form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
-				<input type="hidden" name="slug" value="{{ entry.slug }}">
-				<input type="hidden" name="parent" value="">
-				<div class="form-group">
-            		<textarea class="form-control" id="content" name="content" placeholder="What are your thoughts?"></textarea>
-          		</div>
-				<div class="text-right mb-3">
-					<button class="btn btn-success">Comment</button>
-				</div>
-			</form>
-		</div>
-	</div>
-	<div>
-		<div class="card">
-			<div id="reply-loc" style="display: none;">
-				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+				<form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
 					<input type="hidden" name="slug" value="{{ entry.slug }}">
 					<input type="hidden" name="parent" value="">
 					<div class="form-group">
-	            		<textarea class="form-control" name="content" placeholder="What are your thoughts?"></textarea>
+	            		<textarea class="form-control" style="height: 150px;" id="content" name="content" placeholder="What are your thoughts?"></textarea>
 	          		</div>
 					<div class="text-right mb-3">
 						<button class="btn btn-success">Comment</button>
 					</div>
 				</form>
 			</div>
-			<div class="card-body">
+		</div>
+		<div class="card mb-3">
+			<div id="reply-loc" style="display: none;">
+				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+					<input type="hidden" name="slug" value="{{ entry.slug }}">
+					<input type="hidden" name="parent" value="">
+					<div class="form-group">
+	            		<textarea class="form-control" style="height: 150px;" name="content" placeholder="What are your thoughts?"></textarea>
+	          		</div>
+					<div class="text-right mb-3">
+						<button class="btn btn-success">Comment</button>
+					</div>
+				</form>
+			</div>
+			<div id="comments" class="card-body">
 				{% for key, reply in entry.comments.items() recursive %}
 				<ul class="comment" style="position: relative;">
 					<li class="mb-4">
@@ -102,33 +98,78 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="col-md-4 col-lg-3">
+     <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Community Details</h6>
+      </div>
+      <div class="card-body">
+        <h6 class="mb-3">c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}</h6>
+        <div class="card-text" style="word-wrap:break-word;">
+          {% if forum %}
+          <div class="mb-3">
+          <h6>{{ forum.user_count }}</h6>
+          <span class="small">Subscribers</span>
+          </div>
+          {% endif %}
+
+          {% if forum != None %}{{ forum.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
+        </div>
+        <br>
+
+        {% if forum %}
+
+          {% if not forum.current_user_subscribed %}
+          <a href="{{ url_for('forum_subscribe', forum=forum.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+          {% endif %}
+          <a href="{{ url_for('submit', forum=forum.name) }}" class="btn btn-success btn-block">Create Post</a>
+          {% else %}
+          <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
+        {% endif %}
+        
+      </div>
+     </div>
+
+     <div class="card mb-3">
+      <div class="card-header">
+        <h6 class="card-title mb-0">Community Rules</h6>
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">1.1. No hate</li>
+        <li class="list-group-item">2.2. Keep things SFW</li>
+        <li class="list-group-item">3.3. No Advertising</li>
+      </ul>
+      
+     </div>
+
+     {% include "side_footer.html" %}
+
+
+
+	</div>
+</div>
 </div>
 {% endblock %}
 
 {% block js %}
 $('document').ready(function() {
-	var easyMDE = new EasyMDE({
-		element: $('#content')[0],
-		minHeight: '100px',
-	});
-
 	$('button.btn-reply').click(function(e) {
 		e.preventDefault();
 
-		var ta = $('#new_reply_template')
-			.clone()
-			.appendTo($(this).parent().siblings().filter('.comment-area'))
-			.addClass('mt-3');
+		var comment_area = $(this).parent().siblings().filter('.comment-area');
+		if(comment_area.children().length) {
+			comment_area.children().remove();
+		} else {
 
-		ta.find('input[name=parent]').val($(this).data('id'));
+			var ta = $('#new_reply_template')
+				.clone()
+				.appendTo($(this).parent().siblings().filter('.comment-area'))
+				.addClass('mt-3');
 
-		console.log($(this).attr('data-id'));
+			ta.find('input[name=parent]').val($(this).data('id'));
 
-		var reply_mde = new EasyMDE({
-			element: ta.find('textarea[name=content]')[0],
-			minHeight: '100px',
-		});
-
+		}
 	});
 
 	$('a.comment-vote-btn').each(function(item) {

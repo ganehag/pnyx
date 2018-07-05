@@ -4,9 +4,15 @@
 import os
 import os.path
 import json
+import logging
+import logging.config
 import sys
 import hashlib
 import math
+
+import yaml
+
+from urllib.parse import urlparse, urljoin, urlencode
 
 
 from flask import (Flask, abort, flash, Markup, redirect, render_template,
@@ -18,9 +24,9 @@ from flask_login import (
     login_required, login_user, logout_user
 )
 
-from form import LoginForm
+from form import LoginForm, RegisterForm
 
-
+import peewee
 
 
 from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
@@ -34,22 +40,34 @@ from models import (Comment, AnonymousUser, User, Forum, ForumUser,
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
 #
-#
-#
-#
-#
+
+def create_app(config_file='config.yaml'):
+    config = {}
+
+    for f in ['config.yaml',
+              os.path.join(os.getcwd(), 'config.yaml'),
+              os.path.join(os.path.expanduser('~'), '.pnyx/config.yaml'),
+              os.environ.get('PNYXCONF'), None]:
+        try:
+            with open(f) as cfg:
+                config = yaml.load(cfg.read())
+                if config:
+                    break
+
+        except IOError as e:
+            print(e)
+
+        except Exception as e:
+            print("No configuration", e)
+
+    app = Flask(__name__)
+    app.config.from_mapping(config.get(config.get('instance')))
+    logging.config.dictConfig(config.get(config.get('instance')).get('logging', {}))
+    return app
 
 
-COMMUNITY_PREFIX = 'r/'
-ADMIN_PASSWORD = 'secret'
-APP_DIR = os.path.dirname(os.path.realpath(__file__))
-DATABASE = "postgresql://postgres@172.17.0.3:5432/pnyx?sslmode=disable"
-DEBUG = True
-SECRET_KEY = 'shhh, secret!'  # Used by Flask to encrypt session cookie.
-
-app = Flask(__name__)
+app = create_app("config.yaml")
 app.wsgi_app = ProxyFix(app.wsgi_app)
-app.config.from_object(__name__)
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -57,7 +75,6 @@ login_manager.login_view = "login"
 
 db.init_app(app)
 database = db.database
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -68,11 +85,7 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    search_query = request.args.get('q')
-    if search_query:
-        query = Proposal.search(search_query)
-    else:
-        query = Proposal.public().order_by(Proposal.timestamp.desc(), -Proposal.ranking)  # and Proposal.timestamp.desc()
+    query = Proposal.public().order_by(-Proposal.ranking, Proposal.timestamp.desc())
 
     # The `object_list` helper will take a base query and then handle
     # paginating the results if there are more than 20. For more info see
@@ -82,17 +95,38 @@ def index():
         'index.html',
         query,
         forum=None,
-        search=search_query,
         check_bounds=False)
 
-@app.route('/'+COMMUNITY_PREFIX+'<forum>/')
+@app.route('/search')
+def search():
+    search_query = request.args.get('q').strip()
+
+    if search_query:
+        try:
+            post_query = Proposal.search(search_query)
+            forum_query = Forum.search(search_query)
+
+            return object_list(
+                'search.html',
+                post_query,
+                forums=forum_query,
+                search=search_query,
+                check_bounds=False)
+
+        except (peewee.InternalError, peewee.IntegrityError, peewee.ProgrammingError):
+            # flash("Invalid query '{0}'".format(search_query), 'error')
+            pass
+
+    return render_template('search.html', search=search_query, pagination=None)
+
+@app.route('/c/<forum>')
 def forum(forum):
-    search_query = request.args.get('q')
+    # search_query = request.args.get('q')
     forum_ref = Forum.get_or_none(Forum.name == forum)
     return object_list('index.html',
         Proposal.from_forum(forum_ref).order_by(Proposal.timestamp.desc()),
         forum=forum_ref,
-        search=search_query,
+        # search=search_query,
         check_bounds=False
     )
 
@@ -125,7 +159,7 @@ def submit_comment():
                 with database.atomic():
                     comment.save()
 
-            except IntegrityError as e:
+            except peewee.IntegrityError as e:
                 flash('Unable to save comment', 'error')
 
             else:
@@ -136,7 +170,7 @@ def submit_comment():
 
 
 @app.route('/submit', methods=['GET', 'POST'])
-@app.route('/'+COMMUNITY_PREFIX+'<forum>/submit', methods=['GET', 'POST'])
+@app.route('/c/<forum>/submit', methods=['GET', 'POST'])
 @app.route('/u/<user>/submit', methods=['GET', 'POST'])
 @login_required
 def submit(user=None, forum=None):
@@ -144,7 +178,7 @@ def submit(user=None, forum=None):
 
     if forum is None:
         forum = request.form.get('forum') or None
-        if forum and forum[0:2] == COMMUNITY_PREFIX:
+        if forum and forum[0:2] == "c/":
             forum = forum[2:]
 
     if request.method == 'POST':
@@ -159,13 +193,15 @@ def submit(user=None, forum=None):
                 flash('Community and Title are required.', 'error')
 
             else:
+                entry.update_search_index()
+
                 # Wrap the call to save in a transaction so we can roll it back
                 # cleanly in the event of an integrity error.
                 try:
                     with database.atomic():
                         entry.save()
 
-                except IntegrityError as e:
+                except peewee.IntegrityError as e:
                     print(e)
                     flash('This title is already in use.', 'error')
                 else:
@@ -193,12 +229,12 @@ def user_gold(user):
 #    query = Proposal.drafts().order_by(Proposal.timestamp.desc())
 #    return object_list('index.html', query, check_bounds=False)
 
-@app.route('/'+COMMUNITY_PREFIX+'<forum>/<slug>/')
+@app.route('/c/<forum>/<slug>')
 def detail(forum, slug):
     query = Proposal.public()
     forum_id = Forum.get_or_none(Forum.name == forum)
     entry = get_object_or_404(query, Proposal.slug == slug, Proposal.forum == forum_id)
-    return render_template('detail.html', entry=entry)
+    return render_template('detail.html', entry=entry, forum=forum_id)
 
 
 @app.route('/p/upvote/<slug>', methods=['GET'])
@@ -206,7 +242,7 @@ def detail(forum, slug):
 def proposal_upvote(slug):
     prop = Proposal.get(Proposal.slug == slug)
 
-    if current_user.gold <= 0:
+    if current_user.id == prop.user_id or current_user.gold <= 0:
         return str(prop.votes), 200
 
     prop.upvotes += 1
@@ -224,7 +260,7 @@ def proposal_upvote(slug):
 def proposal_downvote(slug):
     prop = Proposal.get(Proposal.slug == slug)
 
-    if current_user.gold <= 0:
+    if current_user.id == prop.author_id or current_user.gold <= 0:
         return str(prop.votes), 200
 
     prop.downvotes += 1
@@ -280,7 +316,7 @@ def forum_subscribe(forum):
     try:
         with database.atomic():
             fu.save()
-    except IntegrityError as e:
+    except peewee.IntegrityError as e:
         print(e)
 
     else:
@@ -296,7 +332,7 @@ def community_search():
 
     hits = [model_to_dict(hit, recurse=True) for hit in Forum.select().where(Forum.prefix_name.contains(search_query)).order_by(Forum.name)]
     for hit in hits:
-        hit['name'] = COMMUNITY_PREFIX + hit['name']
+        hit['name'] = "c/" + hit['name']
         hit['id'] = str(hit['id'])
 
     return json.dumps({"suggestions": hits})
@@ -307,34 +343,58 @@ def login():
     # client-side form data. For example, WTForms is a library that will
     # handle this for us, and we use a custom LoginForm to validate.
     form = LoginForm()
+
+    # next = get_redirect_target()
+    # next = None
+
     if form.validate_on_submit():
         # Login and validate the user.
         # user should be an instance of your `User` class
         shasum = hashlib.sha384(form.password.data.encode()).hexdigest()
-        user = User.get_or_none(User.username == form.username and User.password == shasum)
-        if user is None:
+
+        try:
+            user = User.get(User.username == form.username.data, User.password == shasum)
+        except peewee.DoesNotExist:
+            flash("Invalid username or password", "error")
             return redirect(url_for('login'))
 
         login_user(user)
 
         flash('Logged in successfully.')
 
-        next = request.args.get('next')
-        # is_safe_url should check if the url is safe for redirects.
-        # See http://flask.pocoo.org/snippets/62/ for an example.
-        # if not is_safe_url(next):
-        #    return abort(400)
+        return form.redirect('index')
 
-        return redirect(next or url_for('index'))
-
-    return render_template('login.html', form=form)
+    return render_template('login.html', form=form, next=request.args.get('next'))
 
 
-@app.route('/logout/', methods=['GET', 'POST'])
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+
+    if form.validate_on_submit():
+        user = User()
+        user.email = form.email.data
+        user.username = form.username.data
+        user.password = hashlib.sha384(form.password.data.encode()).hexdigest()
+
+        try:
+            with database.atomic():
+                user.save()
+
+        except peewee.IntegrityError as e:
+            flash('This username/email is already in use.', 'error')
+
+        else:
+            login_user(user)
+            return form.redirect('index')
+
+    return render_template('register.html', form=form)
 
 @app.template_filter('clean_querystring')
 def clean_querystring(request_args, *keys_to_remove, **new_values):
@@ -342,7 +402,7 @@ def clean_querystring(request_args, *keys_to_remove, **new_values):
     for key in keys_to_remove:
         querystring.pop(key, None)
     querystring.update(new_values)
-    return urllib.urlencode(querystring)
+    return urlencode(querystring)
 
 @app.errorhandler(404)
 def not_found(exc):
@@ -356,9 +416,8 @@ if __name__ == '__main__':
         # with app.app_context():
         #     db.create_all()
         #     db.session.commit()
-        with database:
-            database.create_tables([Comment, User, Forum, ForumUser, Proposal])
-
-            print("Database tables created")
+        # with database:
+        database.create_tables([Comment, User, Forum, ForumUser, Proposal])
+        print("Database tables created")
     else:
         app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)

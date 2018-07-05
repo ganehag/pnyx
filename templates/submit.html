@@ -4,12 +4,10 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/selectize.bootstrap4.css') }}">
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
-<script src="{{ url_for('static', filename='js/selectize.min.js') }}"></script>
 {% endblock %}
 
 
@@ -116,9 +114,10 @@ $(document).ready(function() {
       create: false,
       options: [],
       persist: true,
+      preload: true,
       // loadThrottle: 600,
       allowEmptyOption: true,
-      maxOptions: 10,
+      maxOptions: 20,
       /*
       render: {
           option: function(item, escape) {
@@ -147,7 +146,7 @@ $(document).ready(function() {
       },
       */
       load: function(query, callback) {
-          if (!query.length) return callback();
+          // if (!query.length) return callback();
 
           $.ajax({
               url: '{{ url_for('community_search') }}',

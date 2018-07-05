@@ -14,11 +14,27 @@ html, body {
 
 <div class="container-fluid login-frame h-100">
     <div class="row h-100">
-        <div class="panel-left"></div>
-        <div class="my-auto ml-4 w-25">
+        <div class="panel-left col-2 col-sm-2 col-md-2 col-lg-1"></div>
+
+        <div class="my-auto pl-4 col-10 col-sm-6 col-md-5 col-lg-3">
             <img class="mb-3" src="{{ url_for('static', filename='images/favicon.png') }}" alt="Pnyx">
             <h5 class="mb-3">Sign in</h5>
-            <form action="login" method="POST" class="form-horizontal">
+
+            {% with errors = get_flashed_messages(category_filter=["error"]) %}
+             {% if errors %}
+              {%- for msg in errors %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ msg }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endfor -%}
+            {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('login') }}" method="POST" class="form-horizontal">
+                <input type=hidden value="{{ next or '' }}" name="next">
                 {{ form.csrf_token }}
                 <div class="form-group mb-3">
                     {{ form.username(class_="form-control", placeholder="Username") }}

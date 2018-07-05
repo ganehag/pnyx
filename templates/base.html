@@ -7,61 +7,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="robots" content="noindex">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous">
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/pnyx.css') }}" />
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/hilite.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/selectize.bootstrap4.css') }}">
+
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/pnyx.css') }}" />
     {% block extra_head %}{% endblock %}
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/selectize.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
   </head>
 
   <body>
     {% block body %}
-    <nav class="navbar fixed-top navbar-expand-lg navbar-light" style="background-color: #FFF; border-bottom: 1px solid #CCC;">
-      <a class="navbar-brand" href="{{ url_for('index') }}">Pnyx</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-light main-nav" style="background-color: #FFF; border-bottom: 1px solid #CCC;">
 
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        
-        <form action="{{ url_for('index') }}" id="search-form" method="get" role="search" class="form-inline my-2 my-lg-0 mr-auto ml-auto">
-          <input class="form-control mr-sm-2" type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-        </form>
+    <form action="{{ url_for('search') }}" id="search-form" method="get" role="search" class="d-none d-lg-block navbar-search-form form-inline mx-auto ">
+        <input class="form-control mr-sm-2 " type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>
 
-        <ul class="navbar-nav">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+        Menu
+    </button>
+
+    <div class="navbar-collapse collapse">
+
+      <a class="navbar-brand d-none d-lg-block" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/pnyx.svg') }}" width="25" height="25" alt=""> Pnyx</a>
+      <form id="nav-forumslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-block" {% if forum %}data-id="{{ forum.id }}"{% endif %}>
+        <select class="form-control" style="width: 250px;" id="nav-forumlist-select" name="nav-forumlist-select" placeholder="Select a Community...">
+          {% if forum %}
+            <option value="{{ forum.name_with_prefix }}" selected="selected">{{ forum.name_with_prefix }}</option>
+          {% else %}
+            <option value="c/all" selected="selected">c/all</option>
+          {% endif %}
+        </select>
+      </form>
+
+      <ul class="navbar-nav ml-auto">
+        {% if not current_user.is_authenticated %}
+          <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-outline-primary my-2 my-sm-0 mr-4">Log In</a></li>
+          <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary my-2 my-sm-0 mr-4">Sign Up</a></li>
+        {% endif %}
+
           <li class="nav-item dropdown" >
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              {% if current_user.is_authenticated %}
-              <div class="float-left mr-2">
-                <i class="fas fa-user-circle fa-lg"></i>
-              </div>
-              <div class="float-left mr-2" style="line-height: 0.9rem;">
-                <div id="nav_username" class="small text-dark" style="margin-top: -0.4rem;">{{ current_user.username }}</div>
-                <span id="porte-monnaie" class="small">{{ current_user.gold_count }}</span> <span class="small">gold</span>
-              </div>
-              {% else %}
-              <i class="fas fa-user"></i>
-              {% endif %}
+            <a class="nav-link dropdown-toggle is-flex py-0" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <table cellspacing="0" cellpadding="0" style="{% if current_user.is_authenticated %}min-width: 180px;{% endif %}"><!-- yes, it is 100 times easier -->
+                <tbody>
+                    <tr>
+                    {% if current_user.is_authenticated %}
+                        <td rowspan="2" class="pr-2" style="vertical-align: middle; width: 21px;">
+                          <i class="fas fa-user-circle fa-lg"></i>
+                        </td>
+                        <td id="nav_username" class="text-dark font-weight-bold" style="font-size: 11px; line-height: 14px; width: auto;">{{ current_user.username }}
+                        </td>
+                    </tr>
+                    <tr>
+                      <td style="font-size: 10px; line-height: 13px;">
+                        <span id="porte-monnaie">{{ current_user.gold_count }}</span>
+                        <span class="gold">gold</span>
+                      </td>
+                    {% else %}
+                      <td style="height: 38px;"><i class="fas fa-user"></i></td>
+                    {% endif %}
+                    </tr>
+                </tbody>
+              </table>
             </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-              <div class="dropdown-divider"></div>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown" style="min-width: 230px;">
               {% if current_user.is_authenticated %}
               <a class="dropdown-item" href="{{ url_for('submit') }}">Create Post</a>
+              <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ url_for('logout') }}">Log out</a>
               {% else %}
               <a class="dropdown-item" href="{{ url_for('login') }}">Log in</a>
               {% endif %}
             </div>
           </li>
+
         </ul>
       </div>
+
     </nav>
 
     {#
@@ -77,10 +109,8 @@
 
 
     <div class="container-fluid bg-primary text-white mb-3">
-      <div class="container">
-        <div class="page-header">
-          {% block page_header %}{% endblock %}
-        </div>
+      <div class="page-header row">
+        {% block page_header %}{% endblock %}
       </div>
     </div>
 
@@ -93,6 +123,43 @@
 
       <script type="text/javascript">
         $(document).ready(function() {
+
+          $('#nav-forumlist-select').selectize({
+                valueField: 'name',
+                labelField: 'name',
+                searchField: 'name',
+                sortField: 'name',
+                create: false,
+                options: [],
+                persist: true,
+                allowEmptyOption: true,
+                maxOptions: 10,
+                load: function(query, callback) {
+                    if (!query.length) return callback();
+
+                    $.ajax({
+                        url: "{{ url_for('community_search') }}",
+                        type: 'GET',
+                        dataType: 'json',
+                        data: {
+                          query: query
+                        },
+                        error: function() {
+                            callback();
+                        },
+                        success: function(res) {
+                            callback(res.suggestions.slice(0, 10));
+                        }
+                    });
+                },
+                onChange: function(value) {
+                  if(value) {
+                    $(location).attr('href', '/' + value);  
+                  }
+                },
+            });
+
+
           $('.timeago').each(function() {
             $(this).attr('data-timestamp', $(this).text());
             $(this).text(moment($(this).text()).fromNow());

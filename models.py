@@ -15,11 +15,13 @@ from markdown.extensions.extra import ExtraExtension
 
 from playhouse.flask_utils import FlaskDB
 from playhouse.hybrid import hybrid_property
+from playhouse.postgres_ext import *
 
 from peewee import *
 import peewee
 
 db = FlaskDB()
+
 
 # forward declaration
 class Comment(db.Model):
@@ -50,6 +52,7 @@ class AnonymousUser():
         return 0
 
 class User(db.Model):
+    email = CharField(unique=True)
     username = CharField(unique=True)
     password = CharField()
     gold = IntegerField(default=0)
@@ -91,15 +94,26 @@ class User(db.Model):
 class Forum(db.Model):
     name = CharField(unique=True)
     description = CharField()
+    search_content = TSVectorField()
+
+    def save(self, *args, **kwargs):
+        # FIXME:
+        # Ensure "name" has a correct format.
+        ret = super(Forum, self).save(*args, **kwargs)
+        self.update_search_index()
+        return ret
+
+    def update_search_index(self):
+        search_content = '\n'.join((self.title, self.description))
+        self.search_content = fn.to_tsvector(search_content)
 
     @hybrid_property
     def prefix_name(self):
-        return fn.CONCAT(COMMUNITY_PREFIX, self.name)
+        return fn.CONCAT("c/", self.name)
 
     @property
     def user_count(self):
-        num = Forum.select().join(ForumUser).where(Forum.name == self.name).count()
-
+        num = ForumUser.select().where(ForumUser.forum == self).count()
         magnitude = 0
         while abs(num) >= 1000:
             magnitude += 1
@@ -112,12 +126,20 @@ class Forum(db.Model):
 
     @property
     def name_with_prefix(self):
-        return COMMUNITY_PREFIX + self.name
+        return "c/" + self.name
 
     @property
     def current_user_subscribed(self):
-        # print(ForumUser.get_or_none(User.id == current_user.id and Forum.name == self.name).count())
-        return ForumUser.get_or_none(ForumUser.user_id == current_user.id and ForumUser.forum_id == self.id) is not None    
+        return ForumUser.get_or_none(
+            ForumUser.user_id == current_user.id, ForumUser.forum_id == self.id
+        ) is not None
+
+    @classmethod
+    def search(cls, query):
+        return Forum.select(
+            Forum,
+            fn.COUNT(ForumUser.forum_id).alias('sub_count')
+        ).join(ForumUser).where(Forum.search_content.match(query.replace(' ', '|'))).group_by(Forum).order_by(SQL('sub_count'))
 
     def __str__(self):
         r = {}
@@ -129,7 +151,7 @@ class Forum(db.Model):
         return str(r)
 
 class ForumUser(db.Model):
-    forum = ForeignKeyField(Forum)
+    forum = ForeignKeyField(Forum, backref='subscribers')
     user = ForeignKeyField(User)
     
     class Meta:
@@ -143,10 +165,13 @@ class Proposal(db.Model):
     slug = CharField(unique=True)
     author = ForeignKeyField(User, backref='posts')
     content = TextField()
+    search_content = TSVectorField()
+
     published = BooleanField(index=True)
     upvotes = IntegerField(default=0)
     downvotes = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
+
 
     def save(self, *args, **kwargs):
         # Generate a URL-friendly representation of the entry's title.
@@ -155,8 +180,12 @@ class Proposal(db.Model):
         ret = super(Proposal, self).save(*args, **kwargs)
 
         # Store search content.
-        # self.update_search_index()
+        self.update_search_index()
         return ret
+
+    def update_search_index(self):
+        search_content = '\n'.join((self.title, self.content))
+        self.search_content = fn.to_tsvector(search_content)
 
     @property
     def forum_name(self):
@@ -226,8 +255,13 @@ class Proposal(db.Model):
                       (upvotes + downvotes)) / (1 + 3.8416 / (upvotes + downvotes))
 
     @classmethod
+    def search(cls, query):
+        match_filter = Expression(Proposal.search_content, TS_MATCH, fn.plainto_tsquery(query))
+        return Proposal.select().where((Proposal.published == True) & match_filter)
+
+    @classmethod
     def from_forum(cls, forum):
-        return Proposal.select().where(Proposal.published == True and Proposal.forum == forum)
+        return Proposal.select().where(Proposal.published == True, Proposal.forum == forum)
 
     @classmethod
     def public(cls):
@@ -236,6 +270,10 @@ class Proposal(db.Model):
     @classmethod
     def drafts(cls):
         return Proposal.select().where(Proposal.published == False)
+
+    @property
+    def comment_count(self):
+        return Comment.select().where(Comment.post_id == self.id).count()
 
     @property
     def comments(self):

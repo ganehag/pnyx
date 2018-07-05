@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, HiddenField
+from flask_wtf.recaptcha import RecaptchaField
 
 from urllib.parse import urlparse, urljoin
 from flask import request, url_for, redirect
@@ -11,9 +12,8 @@ def is_safe_url(target):
     return test_url.scheme in ('http', 'https') and \
            ref_url.netloc == test_url.netloc
 
-
 def get_redirect_target():
-    for target in request.args.get('next'), request.referrer:
+    for target in request.args.get('next'), None: # , request.referrer
         if not target:
             continue
         if is_safe_url(target):
@@ -38,3 +38,11 @@ class LoginForm(RedirectForm):
     username = StringField('username')
     password = PasswordField('password')
     submit = SubmitField('submit')
+
+
+class RegisterForm(RedirectForm):
+    email = StringField('email')
+    username = StringField('username')
+    password = PasswordField('password')
+    submit = SubmitField('submit')
+    recaptcha = RecaptchaField()

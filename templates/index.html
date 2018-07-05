@@ -1,17 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}{% if forum %}r/{{ forum.name }}{% else %}r/all{% endif %}{% endblock %}
+{% block title %}
+c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
+{% endblock %}
 
 {% block page_header %}
+<div class="container">
   <h2 class="pt-3 pb-3">
-    r/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+    {% if forum %}
+    <a class="text-light" href="{{ url_for('forum', forum=forum.name) }}">c/{{ forum.name }}</a>
+    {% else %}
+    c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+    {% endif %}
   </h2>
+</div>
 {% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="row">
-  <div class="col-8">
+  <div class="col-md-8">
   {% for entry in object_list %}
     {% if entry.published %}
     <div class="card" style="margin-bottom: 1em;">
@@ -28,18 +36,34 @@
 
         <div>
           {% if forum == None %}
-          <h7 class="card-text" style="float: left;"><a href="{{ url_for('forum', forum=entry.forum.name) }}">r/{{ entry.forum.name }}</a></h7>
+          <h7 class="card-text" style="float: left;">
+            <a href="{{ url_for('forum', forum=entry.forum.name) }}">
+              c/{{ entry.forum.name }}
+            </a>
+          </h7>
           <h7 class="card-text text-muted" style="float: left;">&nbsp;•&nbsp;</h7>
           {% endif %}
-          <h7 class="card-text text-muted" style="font-size: 8pt;">Posted by {{ entry.author.username_with_prefix }} <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span></h7>
+          <h7 class="card-text text-muted" style="font-size: 8pt;">
+            Posted by {{ entry.author.username_with_prefix }}
+            <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+          </h7>
         </div>
 
         <h4 class="card-title">
           <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
-          {{ entry.title }}
+            {{ entry.title }}
           </a>
         </h4>
-        <p class="card-text">{{ entry.html_content }}</p>
+        <div class="card-text">
+          {{ entry.html_content|truncate(220, True) }}
+        </div>
+
+        <div class="card-text">
+          <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}#comments">
+            <i class="fas fa-comment-alt"></i>
+            {{ entry.comment_count }} Comments</a>
+            {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
+        </div>
       </div>
     </div>
     {% endif %}
@@ -47,13 +71,15 @@
     <p>No entries have been created yet.</p>
   {% endfor %}
   </div>
-  <div class="col-4">
+  <div class="col-md-4">
      <div class="card mb-3">
       <div class="card-header">
         <h6 class="card-title mb-0">Community Details</h6>
       </div>
       <div class="card-body">
-        <h6 class="mb-3">r/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}</h6>
+        <h6 class="mb-3">
+          c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+        </h6>
         <div class="card-text" style="word-wrap:break-word;">
           {% if forum %}
           <div class="mb-3">
@@ -62,12 +88,15 @@
           </div>
           {% endif %}
 
-          {% if forum != None %}{{ forum.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
+          {% if forum != None %}
+            {{ forum.description }}
+          {% else %}
+            The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.
+          {% endif %}
         </div>
         <br>
 
         {% if forum %}
-
           {% if not forum.current_user_subscribed %}
           <a href="{{ url_for('forum_subscribe', forum=forum.name) }}" class="btn btn-primary btn-block">Subscribe</a>
           {% endif %}
@@ -112,6 +141,8 @@ $('document').ready(function() {
 
       var jqxhr = $.get($(self).data('target'), function(result) {
         $(self).parent().parent().find('span.vote-counter').text(result);
+
+        $('#porte-monnaie').trigger('amount');
       }).fail(function() {
         console.log("REQ failed");
       });

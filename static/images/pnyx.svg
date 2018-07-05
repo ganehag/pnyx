@@ -14,8 +14,8 @@
    sodipodi:docname="pnyx.svg"
    inkscape:version="0.92.1 r15371"
    inkscape:export-filename="/home/mikael/Project/github/pnyx/static/images/favicon.png"
-   inkscape:export-xdpi="3.0000002"
-   inkscape:export-ydpi="3.0000002">
+   inkscape:export-xdpi="4.5000005"
+   inkscape:export-ydpi="4.5000005">
   <metadata
      id="metadata4582">
     <rdf:RDF>
@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

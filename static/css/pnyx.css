@@ -1,5 +1,5 @@
 body {
-    background-color: #e9f3f5;
+    background-color: #EEE;
     margin-top: 57px;
 }
 
@@ -43,15 +43,39 @@ ul.comment li {
     cursor: pointer;
 }
 
-.login-frame {
-
-}
-
-.login-frame .panel-left {
+.register-frame .panel-left, .login-frame .panel-left {
     width: 156px;
     height: 100vh;
-    background-image: url('/static/images/login-side.jpg');
+    background-image: url('/static/images/sidebar-pnyx.svg');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
+}
+
+.form-control.selectize-control {
+    height: 38px;
+}
+
+.navbar-search-form {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.is-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wider-max {
+    max-width: 1720px;
+}
+
+@media (min-width: 992px) {
+
+.lonely-column {
+    max-width: 350px;
+}
+
 }
