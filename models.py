@@ -55,7 +55,7 @@ class User(db.Model):
     email = CharField(unique=True)
     username = CharField(unique=True)
     password = CharField()
-    gold = IntegerField(default=0)
+    gold = IntegerField(default=100)
 
     _is_active = True
     _is_anonymous = False
@@ -87,6 +87,15 @@ class User(db.Model):
         if magnitude == 0:
             return '%i' % num
         return '%.1f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+
+    @property
+    def subscriptions(self):
+        return Forum.select(Forum.id, Forum.name, Forum.description).join(ForumUser).where(ForumUser.user_id == self.id).order_by(Forum.name)
+    
+    @property
+    def newest_posts(self):
+        return self.posts.order_by(Proposal.timestamp.desc()).limit(10)
+    
 
     def get_id(self):
         return self.id

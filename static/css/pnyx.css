@@ -79,3 +79,13 @@ ul.comment li {
 }
 
 }
+
+.user-profile-pic {
+    height: 80px;
+    width: 80px;
+    line-height: 100px;
+    margin-top: 15px;
+    margin-bottom: -30px;
+    border-radius: 5px;
+    border: 3px solid #FFF;
+}

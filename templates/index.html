@@ -44,7 +44,7 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
           <h7 class="card-text text-muted" style="float: left;">&nbsp;•&nbsp;</h7>
           {% endif %}
           <h7 class="card-text text-muted" style="font-size: 8pt;">
-            Posted by {{ entry.author.username_with_prefix }}
+            Posted by <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
             <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
           </h7>
         </div>

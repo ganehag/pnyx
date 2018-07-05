@@ -224,10 +224,18 @@ def user_gold(user):
     u = get_object_or_404(User, User.username == user)
     return str(u.gold_count), 200
 
-# @app.route('/drafts/')
-# def drafts():
-#    query = Proposal.drafts().order_by(Proposal.timestamp.desc())
-#    return object_list('index.html', query, check_bounds=False)
+@app.route('/u/<user>', methods=["GET", "POST"])
+def user_page(user):
+    u = get_object_or_404(User, User.username == user)
+    query = u.posts.order_by(Proposal.timestamp.desc())
+
+    return object_list(
+        'user.html',
+        query,
+        user=u,
+        check_bounds=False)
+
+    # return render_template('user.html', user=u)
 
 @app.route('/c/<forum>/<slug>')
 def detail(forum, slug):

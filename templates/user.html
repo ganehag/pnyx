@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} ({{user.username_with_prefix}}){% endblock %}
+
+{% block page_header %}
+<div class="container">
+<h2 class="pt-3 pb-3">
+    <a class="text-light" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
+</h2>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg">
+        <div class="card mb-3">
+
+            <ul class="list-group list-group-flush">
+            {% for entry in object_list %}
+            {% if entry.published %}
+            <li class="list-group-item">  
+                  <h5 class="mb-0">
+                    <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
+                    {{ entry.title }}
+                    </a>
+                  </h5>
+                  <h7 class="card-text text-muted" style="font-size: 8pt;">
+                    <span class="font-weight-bold text-dark">{{ entry.forum.name_with_prefix }}</span>
+                    • Posted by <a class="text-muted" href="{{ url_for('user_page', user=user.username) }}">{{ entry.author.username_with_prefix }}</a>
+                    <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                  </h7>
+                  
+
+                  <div class="card-text">
+                    <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}#comments">
+                      <i class="fas fa-comment-alt"></i>
+                      {{ entry.comment_count }} Comments</a>
+                      {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
+                  </div>
+
+            </li>
+            {% endif %}
+            {% else %}
+              <li class="list-group-item">No matches in any posts</li>
+            {% endfor %}
+            </ul>
+
+        </div>
+        </div>
+        <div class="col-lg-4 lonely-column">
+            <div class="card mb-3">
+                <div class="card-header" style="background-color: #33a8ff;">
+                    <div class="user-profile-pic bg-info text-center">
+                        <i class="fas fa-user-astronaut text-white fa-3x"></i>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-text">
+                        <div class="small text-dark font-weight-bold">{{ user.username_with_prefix }}</div>
+                    </div>
+                    <div class="container-fluid mt-3">
+                        <div class="row">
+                            <div class="card-text col-6 px-0">
+                                <h6 class=" font-weight-bold">Gold</h6>
+                                {{ user.gold_count }} <i class="fas fa-coins small"></i>
+                            </div>
+                            <div class="card-text col-6 px-0">
+                                <h6 class="font-weight-bold">No cake day</h6>
+                                -
+                            </div>
+                        </div>
+                    </div>
+                    {% if user.username == current_user.username %}
+                    <div class="mt-4">
+                        <button class="btn btn-success btn-block" type="button">Create a Community</button>
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-primary btn-block" type="button">New Post</button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if user.username == current_user.username %}
+            <div class="card">
+                <div class="card-header">
+                    My Subscriptions
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for subs in user.subscriptions %}
+                    <li class="list-group-item">{{ subs.name_with_prefix }}</li>
+                    {% else %}
+                    <li class="list-group-item">No subscriptions...</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "includes/pagination.html" %}
+</div>
+{% endblock %}
+
+{% block js %}
+$('document').ready(function() {
+   
+});
+{% endblock %}

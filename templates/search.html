@@ -73,7 +73,7 @@ Search
               </h5>
               <h7 class="card-text text-muted" style="font-size: 8pt;">
                 <span class="font-weight-bold text-dark">{{ entry.forum.name_with_prefix }}</span>
-                • Posted by {{ entry.author.username_with_prefix }}
+                • Posted by <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
                 <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
               </h7>
               
