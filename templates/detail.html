@@ -5,7 +5,7 @@
 {% block page_header %}
 <div class="container-fluid" style="max-width: 1720px;">
   <h2 class="pt-3 pb-3">
-  	<a class="text-light" href="{{ url_for('forum', forum=forum.name) }}">c/{{ entry.forum.name }}</a>
+  	<a class="text-light" href="{{ url_for('community', community=community.name) }}">c/{{ entry.community.name }}</a>
   </h2>
 </div>
 {% endblock %}
@@ -108,25 +108,25 @@
         <h6 class="card-title mb-0">Community Details</h6>
       </div>
       <div class="card-body">
-        <h6 class="mb-3">c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}</h6>
+        <h6 class="mb-3">c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}</h6>
         <div class="card-text" style="word-wrap:break-word;">
-          {% if forum %}
+          {% if community %}
           <div class="mb-3">
-          <h6>{{ forum.user_count }}</h6>
+          <h6>{{ community.user_count }}</h6>
           <span class="small">Subscribers</span>
           </div>
           {% endif %}
 
-          {% if forum != None %}{{ forum.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
+          {% if community != None %}{{ community.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
         </div>
         <br>
 
-        {% if forum %}
+        {% if community %}
 
-          {% if not forum.current_user_subscribed %}
-          <a href="{{ url_for('forum_subscribe', forum=forum.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+          {% if not community.current_user_subscribed %}
+          <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">Subscribe</a>
           {% endif %}
-          <a href="{{ url_for('submit', forum=forum.name) }}" class="btn btn-success btn-block">Create Post</a>
+          <a href="{{ url_for('submit', community=community.name) }}" class="btn btn-success btn-block">Create Post</a>
           {% else %}
           <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
         {% endif %}
@@ -184,8 +184,23 @@ $('document').ready(function() {
 		$(this).click(function(e) {
 			e.preventDefault();
 
-			var jqxhr = $.get($(self).data('target'), function(result) {
-				$(self).closest('ul.comment').find('span.comment-score:first').text(result);
+			var jqxhr = $.getJSON($(self).data('target'), function(result) {
+				var vote_counter = $(self).closest('ul.comment').find('span.comment-score:first');
+        		vote_counter.text(result.score);
+
+		        var element = $('<span class="vote-counter-info small">'+result.diff+'</span>').appendTo($(self));
+		        element.focus();
+		        element.toggleClass('show');
+		        if(parseInt(result.diff) < 0) {
+		          element.addClass('downvote');
+		        }
+
+		        setTimeout(function() {
+		          element.toggleClass('hide');
+		          setTimeout(function() {
+		            element.remove();
+		          }, 300);
+		        }, 500);
 
 				$('#porte-monnaie').trigger('amount');
 			}).fail(function() {
@@ -203,8 +218,23 @@ $('document').ready(function() {
 		$(this).click(function(e) {
 			e.preventDefault();
 
-			var jqxhr = $.get($(self).data('target'), function(result) {
-				$(self).parent().parent().find('span.vote-counter').text(result);
+			var jqxhr = $.getJSON($(self).data('target'), function(result) {
+		        var vote_counter = $(self).parent().parent().find('span.vote-counter')
+		        vote_counter.text(result.votes);
+
+		        var element = $('<span class="vote-counter-info">'+result.diff+'</span>').appendTo(vote_counter);
+		        element.focus();
+		        element.toggleClass('show');
+		        if(parseInt(result.diff) < 0) {
+		          element.addClass('downvote');
+		        }
+
+		        setTimeout(function() {
+		          element.toggleClass('hide');
+		          setTimeout(function() {
+		            element.remove();
+		          }, 300);
+		        }, 500);
 
 				$('#porte-monnaie').trigger('amount');
 			}).fail(function() {

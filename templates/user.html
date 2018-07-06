@@ -21,19 +21,19 @@
             {% if entry.published %}
             <li class="list-group-item">  
                   <h5 class="mb-0">
-                    <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
+                    <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
                     {{ entry.title }}
                     </a>
                   </h5>
                   <h7 class="card-text text-muted" style="font-size: 8pt;">
-                    <span class="font-weight-bold text-dark">{{ entry.forum.name_with_prefix }}</span>
+                    <span class="font-weight-bold text-dark">{{ entry.community.name_with_prefix }}</span>
                     • Posted by <a class="text-muted" href="{{ url_for('user_page', user=user.username) }}">{{ entry.author.username_with_prefix }}</a>
                     <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
                   </h7>
                   
 
                   <div class="card-text">
-                    <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}#comments">
+                    <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
                       <i class="fas fa-comment-alt"></i>
                       {{ entry.comment_count }} Comments</a>
                       {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
@@ -47,10 +47,13 @@
             </ul>
 
         </div>
+
+        {% include "includes/pagination.html" %}
+
         </div>
         <div class="col-lg-4 lonely-column">
             <div class="card mb-3">
-                <div class="card-header" style="background-color: #33a8ff;">
+                <div class="card-header user-info-card">
                     <div class="user-profile-pic bg-info text-center">
                         <i class="fas fa-user-astronaut text-white fa-3x"></i>
                     </div>
@@ -62,20 +65,17 @@
                     <div class="container-fluid mt-3">
                         <div class="row">
                             <div class="card-text col-6 px-0">
-                                <h6 class=" font-weight-bold">Gold</h6>
-                                {{ user.gold_count }} <i class="fas fa-coins small"></i>
+                                <h6 class=" font-weight-bold">Karma</h6>
+                                <span class="small">{{ user.karma_count }}</span> <i class="fas fa-sun small text-warning"></i>
                             </div>
                             <div class="card-text col-6 px-0">
-                                <h6 class="font-weight-bold">No cake day</h6>
-                                -
+                                <h6 class="font-weight-bold">Cake day</h6>
+                                <i class="fas fa-birthday-cake text-info small"></i> <span class="small">{{ user.cake_day.strftime('%Y-%m-%d') }}</span>
                             </div>
                         </div>
                     </div>
                     {% if user.username == current_user.username %}
                     <div class="mt-4">
-                        <button class="btn btn-success btn-block" type="button">Create a Community</button>
-                    </div>
-                    <div class="mt-2">
                         <button class="btn btn-primary btn-block" type="button">New Post</button>
                     </div>
                     {% endif %}
@@ -83,7 +83,7 @@
             </div>
 
             {% if user.username == current_user.username %}
-            <div class="card">
+            <div class="card mb-3">
                 <div class="card-header">
                     My Subscriptions
                 </div>
@@ -91,15 +91,29 @@
                     {% for subs in user.subscriptions %}
                     <li class="list-group-item">{{ subs.name_with_prefix }}</li>
                     {% else %}
-                    <li class="list-group-item">No subscriptions...</li>
+                    <li class="list-group-item small">No subscriptions...</li>
                     {% endfor %}
                 </ul>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header">
+                    My Communities
+                </div>
+                <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
+                    {% for commune in user.community_maintainer|sort(attribute='name') %}
+                    <li class="list-group-item">{{ commune.name_with_prefix }}</li>
+                    {% else %}
+                    <li class="list-group-item small">You don't maintain any communities</li>
+                    {% endfor %}
+                </ul>
+                <div class="card-body">
+                    <a href="{{ url_for('community_create') }}" class="btn btn-success btn-block"">Create a Community</a>
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
-
-    {% include "includes/pagination.html" %}
 </div>
 {% endblock %}
 

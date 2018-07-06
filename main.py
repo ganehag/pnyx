@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urljoin, urlencode
 
 
 from flask import (Flask, abort, flash, Markup, redirect, render_template,
-                   request, Response, session, url_for)
+                   request, Response, session, url_for, jsonify)
 from werkzeug.contrib.fixers import ProxyFix
 
 from flask_login import (
@@ -24,18 +24,15 @@ from flask_login import (
     login_required, login_user, logout_user
 )
 
-from form import LoginForm, RegisterForm
+from form import LoginForm, RegisterForm, CommunityCreateForm
 
 import peewee
-
 
 from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
-
-
-from models import (Comment, AnonymousUser, User, Forum, ForumUser, 
-    Proposal, db)
+from models import (Comment, AnonymousUser, User, Community, CommunityUser, 
+    Proposal, CommentVote, PostVote, db)
 
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
@@ -76,61 +73,6 @@ login_manager.login_view = "login"
 db.init_app(app)
 database = db.database
 
-@login_manager.user_loader
-def load_user(user_id):
-    user = User.get_or_none(User.id == int(user_id))
-    if user is None:
-        return AnonymousUser()
-    return user
-
-@app.route('/')
-def index():
-    query = Proposal.public().order_by(-Proposal.ranking, Proposal.timestamp.desc())
-
-    # The `object_list` helper will take a base query and then handle
-    # paginating the results if there are more than 20. For more info see
-    # the docs:
-    # http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#object_list
-    return object_list(
-        'index.html',
-        query,
-        forum=None,
-        check_bounds=False)
-
-@app.route('/search')
-def search():
-    search_query = request.args.get('q').strip()
-
-    if search_query:
-        try:
-            post_query = Proposal.search(search_query)
-            forum_query = Forum.search(search_query)
-
-            return object_list(
-                'search.html',
-                post_query,
-                forums=forum_query,
-                search=search_query,
-                check_bounds=False)
-
-        except (peewee.InternalError, peewee.IntegrityError, peewee.ProgrammingError):
-            # flash("Invalid query '{0}'".format(search_query), 'error')
-            pass
-
-    return render_template('search.html', search=search_query, pagination=None)
-
-@app.route('/c/<forum>')
-def forum(forum):
-    # search_query = request.args.get('q')
-    forum_ref = Forum.get_or_none(Forum.name == forum)
-    return object_list('index.html',
-        Proposal.from_forum(forum_ref).order_by(Proposal.timestamp.desc()),
-        forum=forum_ref,
-        # search=search_query,
-        check_bounds=False
-    )
-
-
 @app.route('/submit_comment', methods=['POST'])
 def submit_comment():
     comment = Comment()
@@ -149,7 +91,7 @@ def submit_comment():
 
         if root is not None and not (Comment.get(Comment.id == root).post == comment.post):
             flash('Invalid comment reference')
-            return redirect(url_for('detail', slug=slug, forum=comment.post.forum.name))
+            return redirect(url_for('detail', slug=slug, community=comment.post.community.name))
         else:
             comment.content = content
             comment.user = user
@@ -163,23 +105,23 @@ def submit_comment():
                 flash('Unable to save comment', 'error')
 
             else:
-                return redirect(url_for('detail', slug=slug, forum=comment.post.forum.name))
+                return redirect(url_for('detail', slug=slug, community=comment.post.community.name))
                 
 
-    return redirect(url_for('detail', slug=slug, forum=comment.post.forum))
+    return redirect(url_for('detail', slug=slug, community=comment.post.community))
 
 
 @app.route('/submit', methods=['GET', 'POST'])
-@app.route('/c/<forum>/submit', methods=['GET', 'POST'])
+@app.route('/c/<community>/submit', methods=['GET', 'POST'])
 @app.route('/u/<user>/submit', methods=['GET', 'POST'])
 @login_required
-def submit(user=None, forum=None):
-    entry = Proposal(forum='', title='', content='')
+def submit(user=None, community=None):
+    entry = Proposal(community='', title='', content='')
 
-    if forum is None:
-        forum = request.form.get('forum') or None
-        if forum and forum[0:2] == "c/":
-            forum = forum[2:]
+    if community is None:
+        community = request.form.get('community') or None
+        if community and community[0:2] == "c/":
+            community = community[2:]
 
     if request.method == 'POST':
         try:
@@ -187,9 +129,9 @@ def submit(user=None, forum=None):
             entry.content = request.form.get('content') or ''
             entry.published = request.form.get('published') or True  # default to published
             entry.author = User.get(User.id == current_user.id)
-            entry.forum = Forum.get(Forum.name == forum)
+            entry.community = Community.get(Community.name == community)
 
-            if not (entry.title and entry.forum and entry.author):
+            if not (entry.title and entry.community and entry.author):
                 flash('Community and Title are required.', 'error')
 
             else:
@@ -207,22 +149,17 @@ def submit(user=None, forum=None):
                 else:
 
                     if entry.published:
-                        return redirect(url_for('detail', forum=entry.forum.name, slug=entry.slug))
+                        return redirect(url_for('detail', community=entry.community.name, slug=entry.slug))
                     else:
                         return 404
 
         except peewee.DoesNotExist:
             flash('Community and Title are required.', 'error')
         
-    if forum is not None:
-        forum = Forum.get_or_none(Forum.name == forum)
+    if community is not None:
+        community = Community.get_or_none(Community.name == community)
 
-    return render_template('submit.html', entry=entry, forum=forum)
-
-@app.route('/u/<user>/gold', methods=['GET'])
-def user_gold(user):
-    u = get_object_or_404(User, User.username == user)
-    return str(u.gold_count), 200
+    return render_template('submit.html', entry=entry, community=community)
 
 @app.route('/u/<user>', methods=["GET", "POST"])
 def user_page(user):
@@ -235,91 +172,15 @@ def user_page(user):
         user=u,
         check_bounds=False)
 
-    # return render_template('user.html', user=u)
+@app.route('/u/<user>/karma', methods=['GET'])
+def user_karma(user):
+    u = get_object_or_404(User, User.username == user)
+    return str(u.karma_count), 200
 
-@app.route('/c/<forum>/<slug>')
-def detail(forum, slug):
-    query = Proposal.public()
-    forum_id = Forum.get_or_none(Forum.name == forum)
-    entry = get_object_or_404(query, Proposal.slug == slug, Proposal.forum == forum_id)
-    return render_template('detail.html', entry=entry, forum=forum_id)
-
-
-@app.route('/p/upvote/<slug>', methods=['GET'])
+@app.route('/u/subscribe/<community>', methods=['GET'])
 @login_required
-def proposal_upvote(slug):
-    prop = Proposal.get(Proposal.slug == slug)
-
-    if current_user.id == prop.user_id or current_user.gold <= 0:
-        return str(prop.votes), 200
-
-    prop.upvotes += 1
-    Proposal.save(prop)
-    prop.author.gold += 5
-    User.save(prop.author)
-
-    current_user.gold -= 1
-    User.save(current_user)
-
-    return str(prop.votes), 200
-
-@app.route('/p/downvote/<slug>', methods=['GET'])
-@login_required
-def proposal_downvote(slug):
-    prop = Proposal.get(Proposal.slug == slug)
-
-    if current_user.id == prop.author_id or current_user.gold <= 0:
-        return str(prop.votes), 200
-
-    prop.downvotes += 1
-    Proposal.save(prop)
-
-    current_user.gold -= 1
-    User.save(current_user)
-
-    return str(prop.votes), 200
-
-@app.route('/p/upvote/<slug>/<comment_id>', methods=['GET'])
-@login_required
-def comment_upvote(slug, comment_id):
-    # Ensure comment belongs to slug
-    # prop = Proposal.get(Proposal.slug == slug)
-    comment = Comment.get(Comment.id == comment_id)
-
-    if current_user.gold <= 0:
-        return str(comment.score), 200
-
-    comment.score += 1
-    Comment.save(comment)
-
-    current_user.gold -= 1
-    User.save(current_user)
-
-    return str(comment.score), 200
-
-@app.route('/p/downvote/<slug>/<comment_id>', methods=['GET'])
-@login_required
-def comment_downvote(slug, comment_id):
-    # Ensure comment belongs to slug
-    # prop = Proposal.get(Proposal.slug == slug)
-    # prop.downvotes += 1
-    comment = Comment.get(Comment.id == comment_id)
-
-    if current_user.gold <= 0:
-        return str(comment.score), 200
-
-    comment.score -= 1
-    Comment.save(comment)
-
-    current_user.gold -= 1
-    User.save(current_user)
-
-    return str(comment.score), 200
-
-@app.route('/u/subscribe/<forum>', methods=['GET'])
-@login_required
-def forum_subscribe(forum):
-    fu = ForumUser(forum=Forum.get(Forum.name == forum), user=User.get(User.id == current_user.id))
+def community_subscribe(community):
+    fu = CommunityUser(community=Community.get(Community.name == community), user=User.get(User.id == current_user.id))
 
     try:
         with database.atomic():
@@ -328,22 +189,260 @@ def forum_subscribe(forum):
         print(e)
 
     else:
-        return redirect(url_for("forum", forum=forum))
+        return redirect(url_for("community", community=community))
 
     # flash error message
 
-    return redirect(url_for("forum", forum=forum))
+    return redirect(url_for("community", community=community))
+
+
+#
+# Community
+#
+
+@app.route('/c/<community>')
+def community(community):
+    community_ref = Community.get_or_none(Community.name == community)
+    return object_list('index.html',
+        Proposal.from_community(community_ref).order_by(Proposal.timestamp.desc()),
+        community=community_ref,
+        check_bounds=False)
+
+@app.route('/c/<community>/<slug>')
+def detail(community, slug):
+    query = Proposal.public()
+    community_id = Community.get_or_none(Community.name == community)
+    entry = get_object_or_404(query, Proposal.slug == slug, Proposal.community == community_id)
+    return render_template('detail.html', entry=entry, community=community_id)
+
+@app.route('/community/create', methods=['GET', 'POST'])
+@login_required
+@database.atomic()
+def community_create():
+    form = CommunityCreateForm()
+
+    if form.validate_on_submit() and current_user.karma >= 50:
+        community = Community()
+        community.name = form.name.data
+        community.description = form.description.data
+        community.maintainer = User.get(User.id == current_user.id)
+
+        community.update_search_index()
+
+        user = User.get(User.id == current_user.id)
+        user.karma -= 50
+        user.save()
+
+        try:
+            community.save()
+
+        except peewee.IntegrityError as e:
+            print(e)
+            flash('This name is already in use.', 'error')
+
+        else:
+            return redirect(url_for('community', community=community.name))
+
+    return render_template('community_create.html', form=form)
 
 @app.route('/community/search', methods=['GET'])
 def community_search():
     search_query = request.args.get('query')
 
-    hits = [model_to_dict(hit, recurse=True) for hit in Forum.select().where(Forum.prefix_name.contains(search_query)).order_by(Forum.name)]
+    hits = [model_to_dict(hit, recurse=True) for hit in Community.select(Community.name, Community.description).where(
+        Community.prefix_name.contains(search_query)).order_by(Community.name)]
+
     for hit in hits:
         hit['name'] = "c/" + hit['name']
         hit['id'] = str(hit['id'])
 
     return json.dumps({"suggestions": hits})
+
+
+#
+# Voting
+#
+
+@app.route('/p/upvote/<slug>', methods=['GET'])
+@login_required
+@database.atomic()
+def proposal_upvote(slug):
+    prop = Proposal.get(Proposal.slug == slug)
+
+    result = {"diff": '0', "votes": str(prop.votes)}
+
+    if current_user.id == prop.author_id or current_user.karma <= 0:
+        return jsonify(result)
+
+    if current_user.has_upvoted(prop):
+        prop.upvotes -= 1
+        # current_user.karma += 1
+        prop.author.karma -= 1  # Not so sure about this...
+        rowcount = PostVote.delete().where((PostVote.post == prop) & (PostVote.user_id == current_user.id)).execute()
+        result["diff"] = '-1'
+    else:
+        score_mod = 1
+        if current_user.has_downvoted(prop):
+            score_mod = 2
+
+        result["diff"] = '+' + str(score_mod)
+        prop.upvotes += score_mod
+        # current_user.karma -= 1
+        prop.author.karma += 1
+
+        rowid = (PostVote
+         .insert(post=prop, user=current_user.id, vote=1)
+         .on_conflict(
+             conflict_target=[PostVote.user,PostVote.post],
+             preserve=[PostVote.vote,PostVote.timestamp])
+         .execute())
+    
+    Proposal.save(prop)
+    # FIXME move karma to another table
+    User.save(prop.author)  
+    User.save(current_user)
+
+    result["votes"] = str(prop.votes)
+
+    return jsonify(result)
+
+@app.route('/p/downvote/<slug>', methods=['GET'])
+@login_required
+@database.atomic()
+def proposal_downvote(slug):
+    prop = Proposal.get(Proposal.slug == slug)
+
+    result = {"diff": '0', "votes": str(prop.votes)}
+
+    if current_user.id == prop.author_id or current_user.karma <= 0:
+        return jsonify(result)
+
+    if current_user.has_downvoted(prop):
+        # current_user.karma += 1
+        prop.author.karma += 1
+        prop.downvotes -= 1
+        rowcount = PostVote.delete().where((PostVote.post == prop) & (PostVote.user_id == current_user.id)).execute()
+        result["diff"] = '+1'
+
+    else:
+        # current_user.karma -= 1
+        prop.author.karma -= 1
+        score_mod = 1
+        if current_user.has_upvoted(prop):
+            score_mod = 2
+        result["diff"] = str(-score_mod)
+        prop.downvotes += score_mod
+        
+
+        rowid = (PostVote
+         .insert(post=prop, user=current_user.id, vote=-1)
+         .on_conflict(
+             conflict_target=[PostVote.user,PostVote.post],
+             preserve=[PostVote.vote,PostVote.timestamp])
+         .execute())
+
+    Proposal.save(prop)
+    # FIXME move karma to another table
+    User.save(current_user)
+    User.save(prop.author) 
+
+    result["votes"] = str(prop.votes)
+
+    return jsonify(result)
+
+@app.route('/p/upvote/<slug>/<comment_id>', methods=['GET'])
+@login_required
+@database.atomic()
+def comment_upvote(slug, comment_id):
+    # Ensure comment belongs to slug
+    # prop = Proposal.get(Proposal.slug == slug)
+    comment = Comment.get(Comment.id == comment_id)
+
+    result = {"diff": '0', "score": str(comment.score)}
+
+    if current_user.id == comment.user_id or current_user.karma <= 0:
+        return jsonify(result)
+
+    if current_user.has_upvoted(comment):
+        # current_user.karma += 1
+        comment.score -= 1
+        rowcount = CommentVote.delete().where(
+            (CommentVote.comment == comment) & (CommentVote.user_id == current_user.id)
+        ).execute()
+        result["diff"] = '-1'
+    else:
+        # current_user.karma -= 1
+        score_mod = 1
+        if current_user.has_downvoted(comment):
+            score_mod = 2
+
+        comment.score += score_mod
+        
+        result["diff"] = '+' + str(score_mod)
+
+        rowid = (CommentVote
+         .insert(comment=comment, user=current_user.id, vote=1)
+         .on_conflict(
+             conflict_target=[CommentVote.user,CommentVote.comment],
+             preserve=[CommentVote.vote,CommentVote.timestamp])
+         .execute())
+
+    Comment.save(comment)
+    # FIXME move karma to another table
+    User.save(current_user)
+
+    result["score"] = str(comment.score)
+
+    return jsonify(result)
+
+@app.route('/p/downvote/<slug>/<comment_id>', methods=['GET'])
+@login_required
+@database.atomic()
+def comment_downvote(slug, comment_id):
+    # Ensure comment belongs to slug
+    # prop = Proposal.get(Proposal.slug == slug)
+    comment = Comment.get(Comment.id == comment_id)
+
+    result = {"diff": '0', "score": str(comment.score)}
+
+    if current_user.id == comment.user_id or current_user.karma <= 0:
+        return jsonify(result)
+
+    if current_user.has_downvoted(comment):
+        comment.score += 1
+        # current_user.karma += 1
+        rowcount = CommentVote.delete().where(
+            (CommentVote.comment == comment) & (CommentVote.user_id == current_user.id)
+        ).execute()
+        result["diff"] = '+1'
+    else:
+        score_mod = 1
+        if current_user.has_upvoted(comment):
+            score_mod = 2
+        result["diff"] = str(-score_mod)
+
+        comment.score -= score_mod
+        # current_user.karma -= 1
+
+        rowid = (CommentVote
+         .insert(comment=comment, user=current_user.id, vote=-1)
+         .on_conflict(
+             conflict_target=[CommentVote.user,CommentVote.comment],
+             preserve=[CommentVote.vote,CommentVote.timestamp])
+         .execute())
+
+    Comment.save(comment)
+    # FIXME move karma to another table
+    User.save(current_user)
+
+    result["score"] = str(comment.score)
+
+    return jsonify(result)
+
+
+#
+# Login/Logout/Register
+#
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -404,6 +503,48 @@ def register():
 
     return render_template('register.html', form=form)
 
+
+#
+# Misc
+#
+
+@app.route('/')
+def index():
+    # FIXME: better sorting
+    query = Proposal.public().order_by(-Proposal.ranking, Proposal.timestamp.desc())
+
+    # The `object_list` helper will take a base query and then handle
+    # paginating the results if there are more than 20. For more info see
+    # the docs:
+    # http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#object_list
+    return object_list(
+        'index.html',
+        query,
+        community=None,
+        check_bounds=False)
+
+@app.route('/search')
+def search():
+    search_query = request.args.get('q').strip()
+
+    if search_query:
+        try:
+            post_query = Proposal.search(search_query)
+            community_query = Community.search(search_query)
+
+            return object_list(
+                'search.html',
+                post_query,
+                communitys=community_query,
+                search=search_query,
+                check_bounds=False)
+
+        except (peewee.InternalError, peewee.IntegrityError, peewee.ProgrammingError):
+            # flash("Invalid query '{0}'".format(search_query), 'error')
+            pass
+
+    return render_template('search.html', search=search_query, pagination=None)
+
 @app.template_filter('clean_querystring')
 def clean_querystring(request_args, *keys_to_remove, **new_values):
     querystring = dict((key, value) for key, value in request_args.items())
@@ -412,9 +553,16 @@ def clean_querystring(request_args, *keys_to_remove, **new_values):
     querystring.update(new_values)
     return urlencode(querystring)
 
+@login_manager.user_loader
+def load_user(user_id):
+    user = User.get_or_none(User.id == int(user_id))
+    if user is None:
+        return AnonymousUser()
+    return user
+
 @app.errorhandler(404)
 def not_found(exc):
-    return Response('<h3>Not found</h3>'), 404
+    return render_template('404.html'), 404
 
 
 login_manager.init_app(app)
@@ -425,7 +573,7 @@ if __name__ == '__main__':
         #     db.create_all()
         #     db.session.commit()
         # with database:
-        database.create_tables([Comment, User, Forum, ForumUser, Proposal])
+        database.create_tables([Comment, User, Community, CommunityUser, Proposal, CommentVote, PostVote])
         print("Database tables created")
     else:
         app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)

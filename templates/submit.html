@@ -17,23 +17,23 @@
   <div class="col-md-8">
     <h5>Create a Post</h5>
 
-    {% if forum %}
-    <form id="autocomplete" action="#" class="form-horizontal" method="post" data-id="{{ forum.id }}">
+    {% if community %}
+    <form id="autocomplete" action="#" class="form-horizontal" method="post" data-id="{{ community.id }}">
     {% else %}
     <form id="autocomplete" action="#" class="form-horizontal" method="post">
     {% endif %}
 
     <div class="form-group" style="position: relative;">
-        <select class="form-control" id="forum-query" name="forum-query" placeholder="Select a Community...">
-          {% if forum %}
-            <option value="{{ forum.name_with_prefix }}" selected="selected">{{ forum.name_with_prefix }}</option>
+        <select class="form-control" id="community-query" name="community-query" placeholder="Select a Community...">
+          {% if community %}
+            <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
           {% endif %}
         </select>
     </div>
     </form>
 
-    {% if forum %}
-    <form id="new_post" action="{{ url_for('submit', forum=forum.name) }}" class="form-horizontal" method="post" data-id="{{ forum.id }}">
+    {% if community %}
+    <form id="new_post" action="{{ url_for('submit', community=community.name) }}" class="form-horizontal" method="post" data-id="{{ community.id }}">
     {% else %}
     <form id="new_post" action="{{ url_for('submit') }}" class="form-horizontal" method="post">
     {% endif %}
@@ -54,7 +54,7 @@
 
     <div class="card mb-3">
       <div class="card-body">
-          <input type="hidden" id="forum" name="forum" value="{{ forum.name }}">
+          <input type="hidden" id="community" name="community" value="{{ community.name }}">
 
           <div class="form-group">
             <input class="form-control" id="title" name="title" type="text" value="{{ entry.title }}" placeholder="Title">
@@ -106,7 +106,7 @@
 $(document).ready(function() {
   var easyMDE = new EasyMDE({element: $('#content')[0]});
 
-  $('#forum-query').selectize({
+  $('#community-query').selectize({
       valueField: 'name',
       labelField: 'name',
       searchField: 'name',
@@ -165,7 +165,7 @@ $(document).ready(function() {
       },
 
       onChange: function(value) {
-        $('#forum').val(value);
+        $('#community').val(value);
       },
   });
 

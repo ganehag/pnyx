@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
 {% block title %}
-c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
+c/{% if community %}{{ community.name }}{% else %}all{% endif %}
 {% endblock %}
 
 {% block page_header %}
 <div class="container">
   <h2 class="pt-3 pb-3">
-    {% if forum %}
-    <a class="text-light" href="{{ url_for('forum', forum=forum.name) }}">c/{{ forum.name }}</a>
+    {% if community %}
+    <a class="text-light" href="{{ url_for('community', community=community.name) }}">c/{{ community.name }}</a>
     {% else %}
-    c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+    c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}
     {% endif %}
   </h2>
 </div>
@@ -35,10 +35,10 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
         </div>
 
         <div>
-          {% if forum == None %}
+          {% if community == None %}
           <h7 class="card-text" style="float: left;">
-            <a href="{{ url_for('forum', forum=entry.forum.name) }}">
-              c/{{ entry.forum.name }}
+            <a href="{{ url_for('community', community=entry.community.name) }}">
+              c/{{ entry.community.name }}
             </a>
           </h7>
           <h7 class="card-text text-muted" style="float: left;">&nbsp;•&nbsp;</h7>
@@ -50,7 +50,7 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
         </div>
 
         <h4 class="card-title">
-          <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
+          <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
             {{ entry.title }}
           </a>
         </h4>
@@ -59,7 +59,7 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
         </div>
 
         <div class="card-text">
-          <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}#comments">
+          <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
             <i class="fas fa-comment-alt"></i>
             {{ entry.comment_count }} Comments</a>
             {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
@@ -70,6 +70,9 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
   {% else %}
     <p>No entries have been created yet.</p>
   {% endfor %}
+
+  {% include "includes/pagination.html" %}
+
   </div>
   <div class="col-md-4">
      <div class="card mb-3">
@@ -78,29 +81,29 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
       </div>
       <div class="card-body">
         <h6 class="mb-3">
-          c/{% if forum != None %}{{ forum.name }}{% else %}all{% endif %}
+          c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}
         </h6>
         <div class="card-text" style="word-wrap:break-word;">
-          {% if forum %}
+          {% if community %}
           <div class="mb-3">
-          <h6>{{ forum.user_count }}</h6>
+          <h6>{{ community.user_count }}</h6>
           <span class="small">Subscribers</span>
           </div>
           {% endif %}
 
-          {% if forum != None %}
-            {{ forum.description }}
+          {% if community != None %}
+            {{ community.description }}
           {% else %}
             The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.
           {% endif %}
         </div>
         <br>
 
-        {% if forum %}
-          {% if not forum.current_user_subscribed %}
-          <a href="{{ url_for('forum_subscribe', forum=forum.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+        {% if community %}
+          {% if not community.current_user_subscribed %}
+          <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">Subscribe</a>
           {% endif %}
-          <a href="{{ url_for('submit', forum=forum.name) }}" class="btn btn-success btn-block">Create Post</a>
+          <a href="{{ url_for('submit', community=community.name) }}" class="btn btn-success btn-block">Create Post</a>
           {% else %}
           <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
         {% endif %}
@@ -122,9 +125,7 @@ c/{% if forum %}{{ forum.name }}{% else %}all{% endif %}
 
      {% include "side_footer.html" %}
   </div>
-  </div>
-
-  {% include "includes/pagination.html" %}
+  </div>  
 </div>
 {% endblock %}
 
@@ -135,12 +136,28 @@ $('document').ready(function() {
     var target = $(this).attr('href');
     $(this).data('target', target);
 
-    $(this).attr('href', '#');
+    $(this).attr('href', '');
     $(this).click(function(e) {
+      var self = $(this);
       e.preventDefault();
 
-      var jqxhr = $.get($(self).data('target'), function(result) {
-        $(self).parent().parent().find('span.vote-counter').text(result);
+      var jqxhr = $.getJSON($(self).data('target'), function(result) {
+        var vote_counter = $(self).parent().parent().find('span.vote-counter')
+        vote_counter.text(result.votes);
+
+        var element = $('<span class="vote-counter-info">'+result.diff+'</span>').appendTo(vote_counter);
+        element.focus();
+        element.toggleClass('show');
+        if(parseInt(result.diff) < 0) {
+          element.addClass('downvote');
+        }
+
+        setTimeout(function() {
+          element.toggleClass('hide');
+          setTimeout(function() {
+            element.remove();
+          }, 300);
+        }, 500);
 
         $('#porte-monnaie').trigger('amount');
       }).fail(function() {

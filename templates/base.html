@@ -40,10 +40,10 @@
     <div class="navbar-collapse collapse">
 
       <a class="navbar-brand d-none d-lg-block" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/pnyx.svg') }}" width="25" height="25" alt=""> Pnyx</a>
-      <form id="nav-forumslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-block" {% if forum %}data-id="{{ forum.id }}"{% endif %}>
-        <select class="form-control" style="width: 250px;" id="nav-forumlist-select" name="nav-forumlist-select" placeholder="Select a Community...">
-          {% if forum %}
-            <option value="{{ forum.name_with_prefix }}" selected="selected">{{ forum.name_with_prefix }}</option>
+      <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-block" {% if community %}data-id="{{ community.id }}"{% endif %}>
+        <select class="form-control" style="width: 250px;" id="nav-communitylist-select" name="nav-communitylist-select" placeholder="Select a Community...">
+          {% if community %}
+            <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
           {% else %}
             <option value="c/all" selected="selected">c/all</option>
           {% endif %}
@@ -70,8 +70,8 @@
                     </tr>
                     <tr>
                       <td style="font-size: 10px; line-height: 13px;">
-                        <span id="porte-monnaie">{{ current_user.gold_count }}</span>
-                        <span class="gold">gold</span>
+                        <span id="porte-monnaie">{{ current_user.karma_count }}</span>
+                        <span class="karma">karma</span>
                       </td>
                     {% else %}
                       <td style="height: 38px;"><i class="fas fa-user"></i></td>
@@ -125,7 +125,7 @@
       <script type="text/javascript">
         $(document).ready(function() {
 
-          $('#nav-forumlist-select').selectize({
+          $('#nav-communitylist-select').selectize({
                 valueField: 'name',
                 labelField: 'name',
                 searchField: 'name',
@@ -169,7 +169,7 @@
           {% if current_user.is_authenticated %}
             $("#porte-monnaie").on("amount", function(event) {
               var self = this;
-              var jqxhr = $.get("{{ url_for('user_gold', user=current_user.username) }}", function(result) {
+              var jqxhr = $.get("{{ url_for('user_karma', user=current_user.username) }}", function(result) {
                 $(self).text(result);
               }).fail(function() {        
               });

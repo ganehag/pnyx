@@ -30,7 +30,7 @@ class Comment(db.Model):
 class AnonymousUser():
     username = "Anonymous"
     password = ""
-    gold = 0
+    karma = 0
 
     @property
     def is_authenticated(self):
@@ -45,7 +45,7 @@ class AnonymousUser():
         return True
 
     @property
-    def gold_count(self):
+    def karma_count(self):
         return 0
 
     def get_id(self):
@@ -55,7 +55,8 @@ class User(db.Model):
     email = CharField(unique=True)
     username = CharField(unique=True)
     password = CharField()
-    gold = IntegerField(default=100)
+    karma = IntegerField(default=100)
+    cake_day = DateTimeField(default=datetime.datetime.now)
 
     _is_active = True
     _is_anonymous = False
@@ -78,8 +79,8 @@ class User(db.Model):
         return "u/" + self.username
 
     @property
-    def gold_count(self):
-        num = self.gold
+    def karma_count(self):
+        num = self.karma
         magnitude = 0
         while abs(num) >= 1000:
             magnitude += 1
@@ -90,30 +91,62 @@ class User(db.Model):
 
     @property
     def subscriptions(self):
-        return Forum.select(Forum.id, Forum.name, Forum.description).join(ForumUser).where(ForumUser.user_id == self.id).order_by(Forum.name)
+        return Community.select(
+            Community.id,
+            Community.name,
+            Community.description
+        ).join(CommunityUser).where(CommunityUser.user_id == self.id).order_by(Community.name)
     
     @property
     def newest_posts(self):
         return self.posts.order_by(Proposal.timestamp.desc()).limit(10)
     
 
+    def has_upvoted(self, item):
+        if isinstance(item, Proposal):
+            return PostVote.select().where(
+                (PostVote.post == item) & (PostVote.user == self) & (PostVote.vote > 0)
+            ).count() > 0
+
+        elif isinstance(item, Comment):
+            return CommentVote.select(CommentVote.id).where(
+                (CommentVote.comment == item) & (CommentVote.user == self) & (CommentVote.vote > 0)
+            ).count() > 0
+        
+        return None
+
+    def has_downvoted(self, item):
+        if isinstance(item, Proposal):
+            return PostVote.select().where(
+                (PostVote.post == item) & (PostVote.user == self) & (PostVote.vote < 0)
+            ).count() > 0
+
+        elif isinstance(item, Comment):
+            return CommentVote.select().where(
+                (CommentVote.comment == item) & (CommentVote.user == self) & (CommentVote.vote < 0)
+            ).count() > 0
+        
+        return None
+
     def get_id(self):
         return self.id
 
-class Forum(db.Model):
+class Community(db.Model):
     name = CharField(unique=True)
     description = CharField()
+    maintainer = ForeignKeyField(User, backref='community_maintainer')
+
     search_content = TSVectorField()
 
     def save(self, *args, **kwargs):
         # FIXME:
         # Ensure "name" has a correct format.
-        ret = super(Forum, self).save(*args, **kwargs)
+        ret = super(Community, self).save(*args, **kwargs)
         self.update_search_index()
         return ret
 
     def update_search_index(self):
-        search_content = '\n'.join((self.title, self.description))
+        search_content = '\n'.join((self.name, self.description))
         self.search_content = fn.to_tsvector(search_content)
 
     @hybrid_property
@@ -122,7 +155,7 @@ class Forum(db.Model):
 
     @property
     def user_count(self):
-        num = ForumUser.select().where(ForumUser.forum == self).count()
+        num = CommunityUser.select().where(CommunityUser.community == self).count()
         magnitude = 0
         while abs(num) >= 1000:
             magnitude += 1
@@ -139,16 +172,16 @@ class Forum(db.Model):
 
     @property
     def current_user_subscribed(self):
-        return ForumUser.get_or_none(
-            ForumUser.user_id == current_user.id, ForumUser.forum_id == self.id
+        return CommunityUser.get_or_none(
+            CommunityUser.user_id == current_user.id, CommunityUser.community_id == self.id
         ) is not None
 
     @classmethod
     def search(cls, query):
-        return Forum.select(
-            Forum,
-            fn.COUNT(ForumUser.forum_id).alias('sub_count')
-        ).join(ForumUser).where(Forum.search_content.match(query.replace(' ', '|'))).group_by(Forum).order_by(SQL('sub_count'))
+        return Community.select(
+            Community,
+            fn.COUNT(CommunityUser.community_id).alias('sub_count')
+        ).join(CommunityUser).where(Community.search_content.match(query.replace(' ', '|'))).group_by(Community).order_by(SQL('sub_count'))
 
     def __str__(self):
         r = {}
@@ -159,17 +192,17 @@ class Forum(db.Model):
                 r[k] = json.dumps(getattr(self, k))
         return str(r)
 
-class ForumUser(db.Model):
-    forum = ForeignKeyField(Forum, backref='subscribers')
+class CommunityUser(db.Model):
+    community = ForeignKeyField(Community, backref='subscribers')
     user = ForeignKeyField(User)
     
     class Meta:
         indexes = (
-            (("forum_id", "user_id"), True),
+            (("community_id", "user_id"), True),
         )
 
 class Proposal(db.Model):
-    forum = ForeignKeyField(Forum, backref='posts')
+    community = ForeignKeyField(Community, backref='posts')
     title = CharField()
     slug = CharField(unique=True)
     author = ForeignKeyField(User, backref='posts')
@@ -197,10 +230,10 @@ class Proposal(db.Model):
         self.search_content = fn.to_tsvector(search_content)
 
     @property
-    def forum_name(self):
-        if self.forum is None:
+    def community_name(self):
+        if self.community is None:
             return ''
-        return Forum.get_or_none(Forum.id == self.forum)
+        return Community.get_or_none(Community.id == self.community)
 
     @property
     def html_content(self):
@@ -269,8 +302,8 @@ class Proposal(db.Model):
         return Proposal.select().where((Proposal.published == True) & match_filter)
 
     @classmethod
-    def from_forum(cls, forum):
-        return Proposal.select().where(Proposal.published == True, Proposal.forum == forum)
+    def from_community(cls, community):
+        return Proposal.select().where(Proposal.published == True, Proposal.community == community)
 
     @classmethod
     def public(cls):
@@ -351,3 +384,26 @@ class Comment(db.Model):
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     score = IntegerField(default=0)
     content = TextField()
+
+
+class CommentVote(db.Model):
+    comment = ForeignKeyField(Comment)
+    user = ForeignKeyField(User)
+    timestamp = DateTimeField(default=datetime.datetime.now, index=True)
+    vote = IntegerField(default=0)
+
+    class Meta:
+        indexes = (
+            (('comment', 'user'), True),
+        )
+
+class PostVote(db.Model):
+    post = ForeignKeyField(Proposal)
+    user = ForeignKeyField(User)
+    timestamp = DateTimeField(default=datetime.datetime.now, index=True)
+    vote = IntegerField(default=0)
+
+    class Meta:
+        indexes = (
+            (('post', 'user'), True),
+        )

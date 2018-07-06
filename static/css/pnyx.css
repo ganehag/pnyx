@@ -89,3 +89,40 @@ ul.comment li {
     border-radius: 5px;
     border: 3px solid #FFF;
 }
+
+.form-textarea {
+    min-height: 200px;
+}
+
+.vote-counter {
+    position: relative;
+}
+
+.vote-counter-info {
+    transition: all .35s ease;
+    position: absolute;
+    margin-top: 0.5em;
+    margin-left: -1em;
+    opacity: 0;
+    color: #000;
+}
+
+.vote-counter-info.downvote {
+    color: red;
+}
+
+.vote-counter-info.show {
+    opacity: 1;
+    transform: translateX(-50px) rotate(360deg) scale(2.0);
+}
+
+.vote-counter-info.hide {
+    opacity: 0;
+}
+
+.user-info-card {
+    background-image: url('/static/images/sidebar-pnyx.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center 45%;
+}

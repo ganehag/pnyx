@@ -16,7 +16,7 @@ Search
 <div class="container-fluid">
   <div class="row mx-auto wider-max">
   <div class="col-lg">
-    {% if forums %}
+    {% if communitys %}
     <div class="card mb-3">
       <div class="card-header">
         Communities
@@ -24,7 +24,7 @@ Search
       <div class="container-fluid">
         <div class="row">
           <ul class="list-group list-group-flush w-100">
-          {% for entry in forums %}
+          {% for entry in communitys %}
           <li class="list-group-item"> 
             <div class="row">
               <div class="col-4 col-md-3">
@@ -36,7 +36,7 @@ Search
               </div>
               <div class="col-12 col-md-3">
                 {% if not entry.current_user_subscribed %}
-                <a href="{{ url_for('forum_subscribe', forum=entry.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+                <a href="{{ url_for('community_subscribe', community=entry.name) }}" class="btn btn-primary btn-block">Subscribe</a>
                 {% endif %}
               </div>
             </div>
@@ -46,6 +46,7 @@ Search
         </div>
       </div>
     </div>
+
     {% endif %}
 
     <div class="card" style="margin-bottom: 1em;">
@@ -67,19 +68,19 @@ Search
               #}
 
               <h5 class="mb-0">
-                <a href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}" class="text-dark">
+                <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
                 {{ entry.title }}
                 </a>
               </h5>
               <h7 class="card-text text-muted" style="font-size: 8pt;">
-                <span class="font-weight-bold text-dark">{{ entry.forum.name_with_prefix }}</span>
+                <span class="font-weight-bold text-dark">{{ entry.community.name_with_prefix }}</span>
                 • Posted by <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
                 <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
               </h7>
               
 
               <div class="card-text">
-                <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, forum=entry.forum.name) }}#comments">
+                <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
                   <i class="fas fa-comment-alt"></i>
                   {{ entry.comment_count }} Comments</a>
                   {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
@@ -92,6 +93,8 @@ Search
         {% endfor %}
       </ul>
     </div>
+
+    {% include "includes/pagination.html" %}
   </div>
 
   <div class="col-md-4 lonely-column">
@@ -99,13 +102,6 @@ Search
   </div>
 </div>
 
-<div class="row">
-  <div class="col-md">
-    {% if pagination %}
-    {% include "includes/pagination.html" %}
-    {% endif %}
-  </div>
-</div>
 
 </div><!-- end fluid -->
 

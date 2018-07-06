@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, HiddenField
+from wtforms import StringField, PasswordField, TextAreaField, SubmitField, HiddenField
 from flask_wtf.recaptcha import RecaptchaField
 
 from urllib.parse import urlparse, urljoin
@@ -45,4 +45,10 @@ class RegisterForm(RedirectForm):
     username = StringField('username')
     password = PasswordField('password')
     submit = SubmitField('submit')
+    recaptcha = RecaptchaField()
+
+
+class CommunityCreateForm(RedirectForm):
+    name = StringField('name')
+    description = TextAreaField('description')
     recaptcha = RecaptchaField()
