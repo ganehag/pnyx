@@ -1,4 +1,4 @@
-{% if pagination.get_page_count() > 1 %}
+{% if pagination and pagination.get_page_count() > 1 %}
 <ul class="pagination justify-content-center">
   {% if pagination.get_page() > 1 %}
     <li class="page-item">
