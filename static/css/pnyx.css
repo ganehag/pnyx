@@ -1,6 +1,14 @@
 body {
     background-color: #EEE;
-    margin-top: 57px;
+    margin-top: 55px;
+    width: 100%;
+    height: 100%;
+}
+
+body.modal-open .slideout-panel {
+    transform: none !important;
+    z-index: unset;
+    will-change: unset;
 }
 
 .autocomplete {
@@ -74,9 +82,9 @@ ul.comment li {
 
 @media (min-width: 992px) {
 
-.lonely-column {
-    max-width: 350px;
-}
+    .lonely-column {
+        max-width: 350px;
+    }
 
 }
 
@@ -125,4 +133,48 @@ ul.comment li {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center 45%;
+}
+
+
+#menu {
+    display: none;
+}
+
+.slideout-menu {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 256px;
+  min-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  z-index: 0;
+  display: none;
+  padding-top: 60px;
+}
+
+.slideout-menu-left {
+  left: 0;
+}
+
+.slideout-menu-right {
+  right: 0;
+}
+
+.slideout-panel {
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+  background-color: #FFF; /* A background-color is required */
+  min-height: 100vh;
+}
+
+.slideout-open,
+.slideout-open body,
+.slideout-open .slideout-panel {
+  overflow: hidden;
+}
+
+.slideout-open .slideout-menu {
+  display: block!important;
 }

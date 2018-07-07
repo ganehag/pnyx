@@ -4,7 +4,13 @@
     <title>{% block title %}{% endblock %}</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <meta http-equiv="cleartype" content="on">
+    <meta name="MobileOptimized" content="320">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
     <meta name="robots" content="noindex">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
@@ -20,57 +26,116 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/slideout/1.0.1/slideout.min.js" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/selectize.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
   </head>
 
   <body>
+    
+    <div id="menu">
+      <div class="container mt-3">
+        <div class="d-flex flex-row" style="height: 30px;">
+          <img src="{{ url_for('static', filename='images/pnyx.svg') }}" height="30px" width="30px" alt="Pnyx" class="mr-auto">
+          {% if current_user.is_authenticated %}
+          <table cellspacing="0" cellpadding="0" style="height: 100%;">
+            <tbody>
+                <tr>
+                {% if current_user.is_authenticated %}
+                    <td rowspan="2" class="pr-2" style="vertical-align: middle; width: 21px;">
+                      <i class="fas fa-user-circle fa-lg"></i>
+                    </td>
+                    <td class="nav_username text-dark font-weight-bold" style="font-size: 13px; line-height: 14px; width: auto;">{{ current_user.username }}
+                    </td>
+                </tr>
+                <tr>
+                  <td style="font-size: 12px; line-height: 13px;">
+                    <span class="porte-monnaie">{{ current_user.karma_count }}</span>
+                    <span class="karma">karma</span>
+                  </td>
+                {% else %}
+                  <td style="height: 38px;"><i class="fas fa-user"></i></td>
+                {% endif %}
+                </tr>
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+        <hr>
+
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('user_page', user=current_user.username) }}" class="btn btn-primary btn-block">My Profile</a>
+
+        <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
+        
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-primary btn-block">Sign Out</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-block">Sign In</a>
+        {% endif %}
+      </div>
+
+    </div>
+
     {% block body %}
     <nav class="navbar fixed-top navbar-expand-lg navbar-light main-nav" style="background-color: #FFF; border-bottom: 1px solid #CCC;">
+    <div class="container-fluid">
+    <div class="row flex-fill">
+      <div class="col-2 col-lg-4 col-xl-4">
+        <button class="btn btn-outline-light toggle-button d-lg-none"><img src="{{ url_for('static', filename='images/hamburger-menu-icon.svg') }}" height="25"></button>
 
-    <form action="{{ url_for('search') }}" id="search-form" method="get" role="search" class="d-none d-lg-block navbar-search-form form-inline mx-auto ">
-        <input class="form-control mr-sm-2 " type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
-        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-    </form>
+      <!--
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+          Menu
+      </button>
+      -->
 
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-        Menu
-    </button>
+      <!-- <div class="navbar-collapse collapse"> -->
 
-    <div class="navbar-collapse collapse">
+        <a class="navbar-brand d-none d-lg-block float-left" style="font-size: 1rem" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/pnyx-with-text.svg') }}" height="25" alt=""></a>
+        
+        <!-- select community -->
+        <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 300px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
+          <select class="form-control" style="width: 100%;" id="nav-communitylist-select" name="nav-communitylist-select" placeholder="Select a Community...">
+            {% if community %}
+              <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
+            {% else %}
+              <option value="c/all" selected="selected">c/all</option>
+            {% endif %}
+          </select>
+        </form>
+      </div>
 
-      <a class="navbar-brand d-none d-lg-block" href="{{ url_for('index') }}"><img src="{{ url_for('static', filename='images/pnyx.svg') }}" width="25" height="25" alt=""> Pnyx</a>
-      <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-block" {% if community %}data-id="{{ community.id }}"{% endif %}>
-        <select class="form-control" style="width: 250px;" id="nav-communitylist-select" name="nav-communitylist-select" placeholder="Select a Community...">
-          {% if community %}
-            <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
-          {% else %}
-            <option value="c/all" selected="selected">c/all</option>
-          {% endif %}
-        </select>
+      <div class="col">
+      <form action="{{ url_for('search') }}" id="search-form" method="get" role="search" class="form-inline d-xl-flex">      
+          <input class="form-control mr-sm-2 bg-light" style="width: 100%;" type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
+          <!-- <button class="btn btn-outline-success my-2 my-sm-0 d-none d-lg-block" type="submit">Search</button> -->
       </form>
+      </div>
 
-      <ul class="navbar-nav ml-auto">
-        {% if not current_user.is_authenticated %}
-          <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-outline-primary my-2 my-sm-0 mr-4">Log In</a></li>
+      <div class="col-2 col-lg-3 col-xl-4">
+        <!-- user navigation -->
+        <ul class="navbar-nav d-none d-lg-flex float-right my-auto">
+          {% if not current_user.is_authenticated %}
+          <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-outline-primary my-2 my-sm-0 mr-4 d-none d-xl-block">Log In</a></li>
           <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary my-2 my-sm-0 mr-4">Sign Up</a></li>
-        {% endif %}
+          {% endif %}
 
           <li class="nav-item dropdown" >
             <a class="nav-link dropdown-toggle is-flex py-0" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <table cellspacing="0" cellpadding="0" style="{% if current_user.is_authenticated %}min-width: 180px;{% endif %}"><!-- yes, it is 100 times easier -->
+              <table cellspacing="0" cellpadding="0" style="{% if current_user.is_authenticated %}min-width: 180px; height: 38px;{% endif %}"><!-- yes, it is 100 times easier -->
                 <tbody>
                     <tr>
                     {% if current_user.is_authenticated %}
                         <td rowspan="2" class="pr-2" style="vertical-align: middle; width: 21px;">
                           <i class="fas fa-user-circle fa-lg"></i>
                         </td>
-                        <td id="nav_username" class="text-dark font-weight-bold" style="font-size: 11px; line-height: 14px; width: auto;">{{ current_user.username }}
+                        <td class="nav_username text-dark font-weight-bold" style="font-size: 13px; line-height: 14px; width: auto;">{{ current_user.username }}
                         </td>
                     </tr>
                     <tr>
-                      <td style="font-size: 10px; line-height: 13px;">
-                        <span id="porte-monnaie">{{ current_user.karma_count }}</span>
+                      <td style="font-size: 12px; line-height: 13px;">
+                        <span class="porte-monnaie">{{ current_user.karma_count }}</span>
                         <span class="karma">karma</span>
                       </td>
                     {% else %}
@@ -95,7 +160,11 @@
         </ul>
       </div>
 
+    </div>
+    </div>
     </nav>
+
+    <main id="panel">
 
     {#
     <div class="container">
@@ -116,13 +185,34 @@
     </div>
 
 
-    <div class="mt-3">
-    {% block content %}{% endblock %}
-    </div>
+      <div class="mt-3">
+      {% block content %}{% endblock %}
+      </div>
+
+    </main>
 
     {% endblock body %}
 
+
       <script type="text/javascript">
+        var panel_element = $('#panel');
+        var menu_element = $('#menu');
+
+        if(menu_element.length && panel_element.length) {
+            var slideout = new Slideout({
+              'panel': panel_element.get(0),
+              'menu': menu_element.get(0),
+              'padding': 256,
+              'tolerance': 70
+            });
+
+            // Toggle button
+            $('.toggle-button').on('click', function() {
+              slideout.toggle();
+            });
+        }
+          
+
         $(document).ready(function() {
 
           $('#nav-communitylist-select').selectize({
@@ -167,7 +257,7 @@
           });
 
           {% if current_user.is_authenticated %}
-            $("#porte-monnaie").on("amount", function(event) {
+            $(".porte-monnaie").on("amount", function(event) {
               var self = this;
               var jqxhr = $.get("{{ url_for('user_karma', user=current_user.username) }}", function(result) {
                 $(self).text(result);
