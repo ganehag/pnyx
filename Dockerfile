@@ -5,7 +5,7 @@ LABEL maintainer Mikael Ganehag Brorsson <mikael.brorsson@gmail.com>
 ENV HOME /home/docker/code/app
 
 COPY requirements.txt /tmp/
-COPY form.py main.py models.py /home/docker/code/app/
+COPY form.py main.py models.py application.py /home/docker/code/app/
 COPY static /home/docker/code/app/static
 COPY templates /home/docker/code/app/templates
 COPY run.sh /home/docker/code/app/
