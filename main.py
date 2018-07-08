@@ -17,7 +17,7 @@ from urllib.parse import urlparse, urljoin, urlencode
 
 from flask import (Flask, abort, flash, Markup, redirect, render_template,
                    request, Response, session, url_for, jsonify)
-from werkzeug.contrib.fixers import ProxyFix
+from flask_assets import Environment, Bundle
 
 from flask_login import (
     LoginManager, current_user,
@@ -64,11 +64,16 @@ def create_app(config_file='config.yaml'):
 
 
 app = create_app("config.yaml")
-app.wsgi_app = ProxyFix(app.wsgi_app)
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
 
+assets = Environment(app)
+# assets.auto_build = False
+css = Bundle('css/selectize.bootstrap4.css', 'css/pnyx.css',
+            # filters='cssmin',
+            output='gen/screen.css')
+assets.register('css_all', css)
 
 db.init_app(app)
 database = db.database

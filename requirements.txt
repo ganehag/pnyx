@@ -1,5 +1,7 @@
 click==6.7
+cssmin==0.2.0
 Flask==1.0.2
+Flask-Assets==0.12
 Flask-Login==0.4.1
 flask-peewee==3.0.1
 Flask-WTF==0.14.2
