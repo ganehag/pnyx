@@ -151,6 +151,7 @@ ul.comment li {
   z-index: 0;
   display: none;
   padding-top: 60px;
+  background-color: #DEDEDE;
 }
 
 .slideout-menu-left {
@@ -165,7 +166,7 @@ ul.comment li {
   position: relative;
   z-index: 1;
   will-change: transform;
-  background-color: #FFF; /* A background-color is required */
+  background-color: #EEE; /* A background-color is required */
   min-height: 100vh;
 }
 
@@ -177,4 +178,11 @@ ul.comment li {
 
 .slideout-open .slideout-menu {
   display: block!important;
+}
+
+#search-form input {
+    background-image: url('/static/images/search-icon.png');
+    background-repeat: no-repeat;
+    background-position: 7px center;
+    padding-left: 36px;
 }
