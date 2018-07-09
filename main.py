@@ -70,7 +70,7 @@ login_manager.login_view = "login"
 
 assets = Environment(app)
 # assets.auto_build = False
-css = Bundle('css/select2-bootstrap4.min.css', 'css/pnyx.css',
+css = Bundle('css/bootstrap_pnyx.min.css', 'css/select2-bootstrap4.min.css', 'css/pnyx.css',
             # filters='cssmin',
             output='gen/screen.css')
 assets.register('css_all', css)
@@ -277,7 +277,8 @@ def community_search():
     feeds = [
         {"id": "", "text": "Home"},
         {"id": "c/popular", "text": "Popular"},
-        {"id": "c/all", "text": "All"}
+        {"id": "c/new", "text": "New"},
+        {"id": "c/upvote", "text": "Most upvoted"}
     ]
 
     # print(json.dumps({"suggestions": feeds + hits}, indent=4))
@@ -541,21 +542,36 @@ def register():
 # Misc
 #
 
+@app.route('/c/upvote')
+@app.route('/c/popular')
+@app.route('/c/new')
 @app.route('/')
 def index():
-    # FIXME: better sorting
-    query = Proposal.public().order_by(-Proposal.ranking, Proposal.timestamp.desc())
-    # query = Proposal.public().order_by()
+    query = Proposal.public()
 
-    # The `object_list` helper will take a base query and then handle
-    # paginating the results if there are more than 20. For more info see
-    # the docs:
-    # http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#object_list
+    # FIXME: better sorting
+
+    community = None
+
+    if request.path == "/c/popular":
+        query = query.order_by(-Proposal.ranking)
+        community = Community(name="popular", description="The most popular posts on Pnyx.")
+
+    elif request.path == "/c/upvote":
+        query = query.order_by(-(Proposal.upvotes - Proposal.downvotes))
+        community = Community(name="upvote", description="The most upvoted posts on Pnyx.")
+
+    elif request.path == "/c/new":
+        query = query.order_by(Proposal.timestamp.desc())
+        community = Community(name="new", description="The newest posts from all of Pnyx. Come here to see posts rising and be a part of the conversation..")
+
+    else:
+        query = query.order_by(-Proposal.ranking, Proposal.timestamp.desc())
 
     return object_list(
         'index.html',
         query,
-        community=None,
+        community=community,
         check_bounds=False)
 
 @app.route('/search')

@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
 {% block title %}
-c/{% if community %}{{ community.name }}{% else %}all{% endif %}
+c/{% if community %}{{ community.name }}{% else %}new{% endif %}
 {% endblock %}
 
 {% block page_header %}
-<div class="container">
+<div class="container semi-transparent">
   <h2 class="pt-3 pb-3">
     {% if community %}
-    <a class="text-light" href="{{ url_for('community', community=community.name) }}">c/{{ community.name }}</a>
+    <a class="text-primary" href="{{ url_for('community', community=community.name) }}">c/{{ community.name }}</a>
     {% else %}
-    c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}
+    <span class="text-primary">c/{% if community != None %}{{ community.name }}{% else %}new{% endif %}</span>
     {% endif %}
   </h2>
 </div>
@@ -41,16 +41,16 @@ c/{% if community %}{{ community.name }}{% else %}all{% endif %}
               c/{{ entry.community.name }}
             </a>
           </h7>
-          <h7 class="card-text text-muted" style="float: left;">&nbsp;•&nbsp;</h7>
+          <h7 class="card-text text-dark" style="float: left;">&nbsp;•&nbsp;</h7>
           {% endif %}
-          <h7 class="card-text text-muted" style="font-size: 8pt;">
-            Posted by <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+          <h7 class="card-text text-dark" style="font-size: 8pt;">
+            Posted by <a class="text-dark" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
             <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
           </h7>
         </div>
 
         <h4 class="card-title">
-          <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
+          <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
             {{ entry.title }}
           </a>
         </h4>
@@ -59,7 +59,7 @@ c/{% if community %}{{ community.name }}{% else %}all{% endif %}
         </div>
 
         <div class="card-text">
-          <a class="small text-muted" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
+          <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
             <i class="fas fa-comment-alt"></i>
             {{ entry.comment_count }} Comments</a>
             {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
@@ -81,10 +81,10 @@ c/{% if community %}{{ community.name }}{% else %}all{% endif %}
       </div>
       <div class="card-body">
         <h6 class="mb-3">
-          c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}
+          c/{% if community != None %}{{ community.name }}{% else %}new{% endif %}
         </h6>
         <div class="card-text" style="word-wrap:break-word;">
-          {% if community %}
+          {% if community and community.maintainer_id != None %}
           <div class="mb-3">
           <h6>{{ community.user_count }}</h6>
           <span class="small">Subscribers</span>
@@ -94,12 +94,12 @@ c/{% if community %}{{ community.name }}{% else %}all{% endif %}
           {% if community != None %}
             {{ community.description }}
           {% else %}
-            The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.
+            The newest posts from all of Pnyx. Come here to see posts rising and be a part of the conversation.
           {% endif %}
         </div>
         <br>
 
-        {% if community %}
+        {% if community and community.maintainer_id != None %}
           {% if not community.current_user_subscribed %}
           <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">Subscribe</a>
           {% endif %}
