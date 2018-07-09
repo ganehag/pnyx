@@ -70,7 +70,7 @@ login_manager.login_view = "login"
 
 assets = Environment(app)
 # assets.auto_build = False
-css = Bundle('css/selectize.bootstrap4.css', 'css/pnyx.css',
+css = Bundle('css/select2-bootstrap4.min.css', 'css/pnyx.css',
             # filters='cssmin',
             output='gen/screen.css')
 assets.register('css_all', css)
@@ -252,16 +252,44 @@ def community_create():
 
 @app.route('/community/search', methods=['GET'])
 def community_search():
-    search_query = request.args.get('query')
+    db_query = Community.select(
+        Community.name,
+        Community.description
+    )
 
-    hits = [model_to_dict(hit, recurse=True) for hit in Community.select(Community.name, Community.description).where(
-        Community.prefix_name.contains(search_query)).order_by(Community.name)]
+    search_query = request.args.get('q')
+    if search_query:
+        db_query = db_query.where(
+            Community.prefix_name.contains(search_query)
+        )
 
-    for hit in hits:
-        hit['name'] = "c/" + hit['name']
-        hit['id'] = str(hit['id'])
+    db_query = db_query.order_by(Community.name).limit(30)
 
-    return json.dumps({"suggestions": hits})
+    # hits = [model_to_dict(hit, recurse=True) for hit in db_query]
+
+    result = []
+    for hit in db_query:
+        result.append({
+            "id": hit.name_with_prefix,
+            "text": hit.name_with_prefix
+        })
+
+    feeds = [
+        {"id": "", "text": "Home"},
+        {"id": "c/popular", "text": "Popular"},
+        {"id": "c/all", "text": "All"}
+    ]
+
+    # print(json.dumps({"suggestions": feeds + hits}, indent=4))
+
+    return jsonify({"results": [
+    {
+        "text": "Feeds",
+        "children": feeds,
+    }, {
+        "text": "Other",
+        "children": result,
+    }]})
 
 
 #
@@ -517,11 +545,13 @@ def register():
 def index():
     # FIXME: better sorting
     query = Proposal.public().order_by(-Proposal.ranking, Proposal.timestamp.desc())
+    # query = Proposal.public().order_by()
 
     # The `object_list` helper will take a base query and then handle
     # paginating the results if there are more than 20. For more info see
     # the docs:
     # http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#object_list
+
     return object_list(
         'index.html',
         query,

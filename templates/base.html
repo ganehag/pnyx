@@ -20,6 +20,11 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous">
 
+
+    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/choices.js/3.0.4/styles/css/base.min.css" integrity="sha256-k2svpFg81Ot54NOWYxvMel4YaupN/Uj1BcHkFikoeIw=" crossorigin="anonymous" />-->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css" integrity="sha256-xJOZHfpxLR/uhh1BwYFS5fhmOAdIRQaiOul5F/b7v3s=" crossorigin="anonymous" />
+
     
     {% assets "css_all" %}
     <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}">
@@ -37,57 +42,60 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slideout/1.0.1/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.5/js/standalone/selectize.min.js" integrity="sha256-ZUrobNnm8+P2vPGUWYJ4BIGF08HWii4FKrAlZ+1cbr0=" crossorigin="anonymous"></script>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js" integrity="sha256-FcVIknBiVRk5KLQeIBb9VQdtFRMqwffXyZ+D8q0gQro=" crossorigin="anonymous"></script>
+
     {% block extra_scripts %}{% endblock %}
   </head>
 
   <body>
     
     <div id="menu">
-      <div class="container mt-3">
-        <div class="card mb-3">
-          <div class="card-body">
-            <div class="d-flex flex-row" style="height: 30px;">
-              
-              {% if current_user.is_authenticated %}
-              <table cellspacing="0" cellpadding="0" style="height: 100%;">
-                <tbody>
-                    <tr>
-                    {% if current_user.is_authenticated %}
-                        <td rowspan="2" class="pr-2" style="vertical-align: middle; width: 21px;">
-                          <i class="fas fa-user-circle fa-lg"></i>
-                        </td>
-                        <td class="nav_username text-dark font-weight-bold" style="font-size: 13px; line-height: 14px; width: auto;">{{ current_user.username }}
-                        </td>
-                    </tr>
-                    <tr>
-                      <td style="font-size: 12px; line-height: 13px;">
-                        <span class="porte-monnaie">{{ current_user.karma_count }}</span>
-                        <span class="karma">karma</span>
-                      </td>
-                    {% else %}
-                      <td style="height: 38px;"><i class="fas fa-user"></i></td>
-                    {% endif %}
-                    </tr>
-                </tbody>
-              </table>
-              {% endif %}
-            </div>
+
+      <div class="d-flex align-items-center px-3 bg-white" style="height: 78px;">
+        {% if current_user.is_authenticated %}
+        <i class="fas fa-user-circle fa-lg"></i>
+        <div class="ml-3">
+          <div class="nav_username text-dark font-weight-bold small">
+            {{ current_user.username }}
+          </div>
+          <div class="small">
+              <span class="porte-monnaie">{{ current_user.karma_count }}</span>
+              <span class="karma">karma</span>
           </div>
         </div>
-
-        {% if current_user.is_authenticated %}
-        <div class="btn-group-vertical w-100">
-        <a href="{{ url_for('user_page', user=current_user.username) }}" class="btn btn-primary btn-block">My Profile</a>
-        <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
-        </div>
-
-        <a href="{{ url_for('logout') }}" class="btn btn-light btn-block mt-5">Sign Out</a>
-        {% else %}
-        <a href="{{ url_for('login') }}" class="btn btn-primary btn-block">Sign In</a>
         {% endif %}
-
       </div>
+
+      <div class="container mt-3">
+        <!-- select community -->
+        <form action="#" method="get" class="w-100 mb-3" {% if community %}data-id="{{ community.id }}"{% endif %}>
+          <select class="form-control nav-communitylist-select" style="width: 100%;" name="menu-communitylist-select" placeholder="Select a Community...">
+            {% if community %}
+              <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
+            {% else %}
+              <option value="c/all" selected="selected">c/all</option>
+            {% endif %}
+          </select>
+        </form>
+      </div>
+
+      <div class="list-group list-group-flush">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('user_page', user=current_user.username) }}" class="list-group-item list-group-item-action">My Profile</a>
+        <a href="{{ url_for('submit') }}" class="list-group-item list-group-item-action">Create Post</a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="list-group-item list-group-item-action">Sign In</a>
+        {% endif %}
+      </div>
+
+      <div class="list-group list-group-flush mt-5">
+        <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action list-group-item-primary"">Sign Out</a>
+      </div>
+
     </div>
+
 
     {% block body %}
     <nav class="navbar fixed-top navbar-expand-lg navbar-light main-nav" style="background-color: #FFF; border-bottom: 1px solid #CCC;">
@@ -102,7 +110,7 @@
         
         <!-- select community -->
         <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 300px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
-          <select class="form-control" style="width: 100%;" id="nav-communitylist-select" name="nav-communitylist-select" placeholder="Select a Community...">
+          <select class="form-control nav-communitylist-select" style="width: 100%;" name="nav-communitylist-select" placeholder="Select a Community...">
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
@@ -223,42 +231,29 @@
           
 
         $(document).ready(function() {
-
-          $('#nav-communitylist-select').selectize({
-                valueField: 'name',
-                labelField: 'name',
-                searchField: 'name',
-                sortField: 'name',
-                create: false,
-                options: [],
-                persist: true,
-                allowEmptyOption: true,
-                maxOptions: 10,
-                load: function(query, callback) {
-                    if (!query.length) return callback();
-
-                    $.ajax({
-                        url: "{{ url_for('community_search') }}",
-                        type: 'GET',
-                        dataType: 'json',
-                        data: {
-                          query: query
-                        },
-                        error: function() {
-                            callback();
-                        },
-                        success: function(res) {
-                            callback(res.suggestions.slice(0, 10));
-                        }
-                    });
-                },
-                onChange: function(value) {
-                  if(value) {
-                    $(location).attr('href', '/' + value);  
-                  }
-                },
-            });
-
+          $('.nav-communitylist-select').select2({
+            ajax: {
+              url: "{{ url_for('community_search') }}",
+              dataType: 'json',
+              delay: 250,
+              data: function (params) {
+                var query = {
+                  q: params.term,
+                }
+                return query;
+              },
+              processResults: function (data) {
+                return {
+                  results: data.results
+                };
+              }
+            }
+          }).on('select2:select', function (e) {
+            var data = e.params.data;
+             if(data && data.id != undefined) {
+              $(location).attr('href', '/' + data.id);
+              }
+          });
 
           $('.timeago').each(function() {
             $(this).attr('data-timestamp', $(this).text());
