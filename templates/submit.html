@@ -106,6 +106,8 @@
 $(document).ready(function() {
   var easyMDE = new EasyMDE({element: $('#content')[0]});
 
+
+  /*
   $('#community-query').selectize({
       valueField: 'name',
       labelField: 'name',
@@ -118,33 +120,7 @@ $(document).ready(function() {
       // loadThrottle: 600,
       allowEmptyOption: true,
       maxOptions: 20,
-      /*
-      render: {
-          option: function(item, escape) {
-            console.log(item);
 
-              return '<div>' +
-                  '<span class="title">' +
-                      '<span class="name"><i class="icon ' + (item.fork ? 'fork' : 'source') + '"></i>' + escape(item.name) + '</span>' +
-                      '<span class="by">' + escape(item.username) + '</span>' +
-                  '</span>' +
-                  '<span class="description">' + escape(item.description) + '</span>' +
-                  '<ul class="meta">' +
-                      (item.language ? '<li class="language">' + escape(item.language) + '</li>' : '') +
-                      '<li class="watchers"><span>' + escape(item.watchers) + '</span> watchers</li>' +
-                      '<li class="forks"><span>' + escape(item.forks) + '</span> forks</li>' +
-                  '</ul>' +
-              '</div>';
-          }
-      },
-
-      score: function(search) {
-          var score = this.getScoreFunction(search);
-          return function(item) {
-              return score(item) * (1 + Math.min(item.watchers / 100, 1));
-          };
-      },
-      */
       load: function(query, callback) {
           // if (!query.length) return callback();
 
@@ -167,6 +143,32 @@ $(document).ready(function() {
       onChange: function(value) {
         $('#community').val(value);
       },
+  });
+
+  */
+
+
+  $('#community-query').select2({
+    ajax: {
+      url: "{{ url_for('community_search') }}",
+      dataType: 'json',
+      delay: 250,
+      data: function (params) {
+        var query = {
+          q: params.term,
+          s: 1,
+        }
+        return query;
+      },
+      processResults: function (data) {
+        return {
+          results: data.results
+        };
+      }
+    }
+  }).on('select2:select', function (e) {
+    var data = e.params.data;
+    $('#community').val(data.id);
   });
 
 });

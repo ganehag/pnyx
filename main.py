@@ -283,8 +283,10 @@ def community_search():
 
     # print(json.dumps({"suggestions": feeds + hits}, indent=4))
 
-    return jsonify({"results": [
-    {
+    if request.args.get('s'):
+        return jsonify({"results": result})
+
+    return jsonify({"results": [{
         "text": "Feeds",
         "children": feeds,
     }, {
