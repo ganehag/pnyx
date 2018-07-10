@@ -62,7 +62,7 @@
           </div>
           <div class="small">
               <span class="porte-monnaie">{{ current_user.karma_count }}</span>
-              <span class="karma">karma</span>
+              <span class="karma">{% trans %}karma{% endtrans %}</span>
           </div>
         </div>
         {% endif %}
@@ -71,7 +71,7 @@
       <div class="container mt-3">
         <!-- select community -->
         <form action="#" method="get" class="w-100 mb-3" {% if community %}data-id="{{ community.id }}"{% endif %}>
-          <select class="form-control nav-communitylist-select" style="width: 100%;" name="menu-communitylist-select" placeholder="Select a Community...">
+          <select class="form-control nav-communitylist-select" style="width: 100%;" name="menu-communitylist-select" placeholder="{% trans %}Select a Community...{% endtrans %}">
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
@@ -83,15 +83,15 @@
 
       <div class="list-group list-group-flush">
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('user_page', user=current_user.username) }}" class="list-group-item list-group-item-action">My Profile</a>
-        <a href="{{ url_for('submit') }}" class="list-group-item list-group-item-action">Create Post</a>
+        <a href="{{ url_for('user_page', user=current_user.username) }}" class="list-group-item list-group-item-action">{% trans %}My Profile{% endtrans %}</a>
+        <a href="{{ url_for('submit') }}" class="list-group-item list-group-item-action">{% trans %}Create Post{% endtrans %}</a>
         {% else %}
-        <a href="{{ url_for('login') }}" class="list-group-item list-group-item-action">Sign In</a>
+        <a href="{{ url_for('login') }}" class="list-group-item list-group-item-action">{% trans %}Sign In{% endtrans %}</a>
         {% endif %}
       </div>
 
       <div class="list-group list-group-flush mt-5">
-        <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action list-group-item-primary"">Sign Out</a>
+        <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action list-group-item-primary"">{% trans %}Sign Out{% endtrans %}</a>
       </div>
 
     </div>
@@ -110,7 +110,7 @@
         
         <!-- select community -->
         <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 300px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
-          <select class="form-control nav-communitylist-select" style="width: 100%;" name="nav-communitylist-select" placeholder="Select a Community...">
+          <select class="form-control nav-communitylist-select" style="width: 100%;" name="nav-communitylist-select" placeholder="{% trans %}Select a Community...{% endtrans %}">
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
@@ -122,7 +122,7 @@
 
       <div class="col">
         <form action="{{ url_for('search') }}" id="search-form" method="get" role="search" class="form-inline d-xl-flex">      
-          <input class="form-control mr-sm-2 bg-light" style="width: 100%;" type="search" name="q" placeholder="Search" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
+          <input class="form-control mr-sm-2 bg-light" style="width: 100%;" type="search" name="q" placeholder="{% trans %}Search{% endtrans %}" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
         </form>
       </div>
 
@@ -134,8 +134,8 @@
         <!-- user navigation -->
         <ul class="navbar-nav d-none d-lg-flex float-right my-auto">
           {% if not current_user.is_authenticated %}
-          <li class="nav-item"><a href="{{ url_for('login') }}" class="btn btn-outline-primary my-2 my-sm-0 mr-4 d-none d-xl-block">Log In</a></li>
-          <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary my-2 my-sm-0 mr-4">Sign Up</a></li>
+          <li class="nav-item"><a href="{{ url_for('login') }}" class="is-login btn btn-outline-primary my-2 my-sm-0 mr-4 d-none d-xl-block">{% trans %}Sign In{% endtrans %}</a></li>
+          <li class="nav-item"><a href="{{ url_for('register') }}" class="btn btn-primary my-2 my-sm-0 mr-4">{% trans %}Sign Up{% endtrans %}</a></li>
           {% endif %}
 
           <li class="nav-item dropdown" >
@@ -153,7 +153,7 @@
                     <tr>
                       <td style="font-size: 12px; line-height: 13px;">
                         <span class="porte-monnaie">{{ current_user.karma_count }}</span>
-                        <span class="karma">karma</span>
+                        <span class="karma">{% trans %}karma{% endtrans %}</span>
                       </td>
                     {% else %}
                       <td style="height: 38px;"><i class="fas fa-user"></i></td>
@@ -164,12 +164,12 @@
             </a>
             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown" style="min-width: 230px;">
               {% if current_user.is_authenticated %}
-              <a class="dropdown-item" href="{{ url_for('user_page', user=current_user.username) }}">My Profile</a>
-              <a class="dropdown-item" href="{{ url_for('submit') }}">Create Post</a>
+              <a class="dropdown-item" href="{{ url_for('user_page', user=current_user.username) }}">{% trans %}My Profile{% endtrans %}</a>
+              <a class="dropdown-item" href="{{ url_for('submit') }}">{% trans %}Create Post{% endtrans %}</a>
               <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="{{ url_for('logout') }}">Log out</a>
+              <a class="dropdown-item" href="{{ url_for('logout') }}">{% trans %}Sign Out{% endtrans %}</a>
               {% else %}
-              <a class="dropdown-item" href="{{ url_for('login') }}">Log in</a>
+              <a class="dropdown-item is-login" href="{{ url_for('login') }}">{% trans %}Sign In{% endtrans %}</a>
               {% endif %}
             </div>
           </li>
@@ -208,6 +208,19 @@
 
     </main>
 
+    {% if not current_user.is_authenticated %}
+
+    <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg h-100 d-flex flex-column justify-content-center my-0" role="document">
+        <div class="modal-content">
+          <div class="embed-responsive embed-responsive-login">
+            <iframe class="embed-responsive-item" src="{{ url_for('login') }}"></iframe>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
     {% endblock body %}
 
 
@@ -228,9 +241,13 @@
               slideout.toggle();
             });
         }
-          
 
         $(document).ready(function() {
+          $('a.is-login').click(function(e) {
+            e.preventDefault();
+            $('#loginModal').modal('show');
+          })
+
           $('.nav-communitylist-select').select2({
             ajax: {
               url: "{{ url_for('community_search') }}",
@@ -270,6 +287,7 @@
             });
           {% endif %}
         });
+
         {% block js %}{% endblock %}
       </script>
     </div>

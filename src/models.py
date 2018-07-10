@@ -33,6 +33,10 @@ class AnonymousUser():
     karma = 0
 
     @property
+    def id(self):
+        return None
+
+    @property
     def is_authenticated(self):
         return False
 
@@ -48,6 +52,10 @@ class AnonymousUser():
     def karma_count(self):
         return 0
 
+    @property
+    def locale(self):
+        return None
+    
     def get_id(self):
         return 0
 
@@ -61,6 +69,10 @@ class User(db.Model):
     _is_active = True
     _is_anonymous = False
     _is_authenticated = True
+
+    @property
+    def locale(self):
+        return None
 
     @property
     def is_authenticated(self):

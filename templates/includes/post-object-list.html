@@ -1,0 +1,148 @@
+{% if search is defined or user is defined %}
+
+<ul class="list-group list-group-flush">
+{% for entry in object_list %}
+
+  {% if entry.published %}
+  <li class="list-group-item">
+    <div class="float-left text-center mr-1" style="margin-left: -10px; width: 40px;">
+        <div>
+          <a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+        </div>
+        <div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+        <div>
+          <a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+        </div>
+    </div>
+
+    <h5 class="mb-0">
+      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
+      {{ entry.title }}
+      </a>
+    </h5>
+
+    <h7 class="card-text text-dark" style="font-size: 8pt;">
+      <span class="font-weight-bold text-primary">{{ entry.community.name_with_prefix }}</span>
+      • Posted by <a class="text-dark" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+      <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+    </h7>
+
+    <div class="card-text">
+      <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
+        <i class="fas fa-comment-alt"></i>
+        {{ entry.comment_count }} Comments</a>
+        {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
+    </div>
+  </li>
+  {% endif %}
+
+{% else %}
+  <li class="list-group-item">No matches in any posts</li>
+{% endfor %}
+</ul>
+
+{% else %}
+
+{% for entry in object_list %}
+
+{% if entry.published %}
+
+<div class="card post-card mb-2">
+  <div class="card-body" style="margin-left: 40px;">
+    <div class="float-left text-center" style="margin-left: -50px; width: 40px;">
+        <div>
+          <a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+        </div>
+        <div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+        <div>
+          <a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+        </div>
+    </div>
+
+    <div>
+      {% if community == None %}
+      <h7 class="card-text float-left">
+        <a href="{{ url_for('community', community=entry.community.name) }}">
+          c/{{ entry.community.name }}
+        </a>
+      </h7>
+      <h7 class="card-text text-dark float-left">&nbsp;•&nbsp;</h7>
+      {% endif %}
+      <h7 class="card-text text-dark" style="font-size: 8pt;">
+        Posted by <a class="text-dark" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+        <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+      </h7>
+    </div>
+
+    <h4 class="card-title">
+      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
+        {{ entry.title }}
+      </a>
+    </h4>
+    <div class="card-content-wrapper">
+    <div class="card-text card-content">
+      {{ entry.html_content|truncate(300, True) }}
+    </div>
+    </div>
+
+    <div class="card-text">
+      <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
+        <i class="fas fa-comment-alt"></i>
+        {{ entry.comment_count }} Comments</a>
+        {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="card-body">
+  <p>No entries have been created yet.</p>
+</div>
+{% endfor %}
+
+{% endif %}
+
+<script type="text/javascript">
+$('document').ready(function() {
+  $('a.vote-btn').each(function(item) {
+    var self = this;
+    var target = $(this).attr('href');
+    $(this).data('target', target);
+
+    $(this).attr('href', '');
+    $(this).click(function(e) {
+      var self = $(this);
+      e.preventDefault();
+
+      var jqxhr = $.getJSON($(self).data('target'), function(result) {
+        if(result && result.error && result.code == 401) {
+          $('#loginModal').modal('show');
+          return;
+        }
+
+        var vote_counter = $(self).parent().parent().find('span.vote-counter')
+        vote_counter.text(result.votes);
+
+        var element = $('<span class="vote-counter-info">'+result.diff+'</span>').appendTo(vote_counter);
+        element.focus();
+        element.toggleClass('show');
+        if(parseInt(result.diff) < 0) {
+          element.addClass('downvote');
+        }
+
+        setTimeout(function() {
+          element.toggleClass('hide');
+          setTimeout(function() {
+            element.remove();
+          }, 300);
+        }, 500);
+
+        $('#porte-monnaie').trigger('amount');
+      }).fail(function() {
+        console.log("REQ failed");
+      });
+    });
+  });
+});
+</script>

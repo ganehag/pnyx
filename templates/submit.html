@@ -106,48 +106,6 @@
 $(document).ready(function() {
   var easyMDE = new EasyMDE({element: $('#content')[0]});
 
-
-  /*
-  $('#community-query').selectize({
-      valueField: 'name',
-      labelField: 'name',
-      searchField: 'name',
-      sortField: 'name',
-      create: false,
-      options: [],
-      persist: true,
-      preload: true,
-      // loadThrottle: 600,
-      allowEmptyOption: true,
-      maxOptions: 20,
-
-      load: function(query, callback) {
-          // if (!query.length) return callback();
-
-          $.ajax({
-              url: '{{ url_for('community_search') }}',
-              type: 'GET',
-              dataType: 'json',
-              data: {
-                query: query
-              },
-              error: function() {
-                  callback();
-              },
-              success: function(res) {
-                  callback(res.suggestions.slice(0, 10));
-              }
-          });
-      },
-
-      onChange: function(value) {
-        $('#community').val(value);
-      },
-  });
-
-  */
-
-
   $('#community-query').select2({
     ajax: {
       url: "{{ url_for('community_search') }}",

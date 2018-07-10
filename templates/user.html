@@ -3,10 +3,10 @@
 {% block title %}{{ user.username }} ({{user.username_with_prefix}}){% endblock %}
 
 {% block page_header %}
-<div class="container">
-<h2 class="pt-3 pb-3">
-    <a class="text-primary" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
-</h2>
+<div class="container semi-transparent">
+    <h2 class="pt-3 pb-3">
+        <a class="text-primary" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
+    </h2>
 </div>
 {% endblock %}
 
@@ -14,42 +14,11 @@
 <div class="container">
     <div class="row">
         <div class="col-lg">
-        <div class="card mb-3">
+            <div class="card mb-3">
+            {% include "includes/post-object-list.html" %}
+            </div>
 
-            <ul class="list-group list-group-flush">
-            {% for entry in object_list %}
-            {% if entry.published %}
-            <li class="list-group-item">  
-                  <h5 class="mb-0">
-                    <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
-                    {{ entry.title }}
-                    </a>
-                  </h5>
-                  <h7 class="card-text text-dark" style="font-size: 8pt;">
-                    <span class="font-weight-bold text-dark">{{ entry.community.name_with_prefix }}</span>
-                    • Posted by <a class="text-dark" href="{{ url_for('user_page', user=user.username) }}">{{ entry.author.username_with_prefix }}</a>
-                    <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-                  </h7>
-                  
-
-                  <div class="card-text">
-                    <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
-                      <i class="fas fa-comment-alt"></i>
-                      {{ entry.comment_count }} Comments</a>
-                      {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
-                  </div>
-
-            </li>
-            {% endif %}
-            {% else %}
-              <li class="list-group-item">No matches in any posts</li>
-            {% endfor %}
-            </ul>
-
-        </div>
-
-        {% include "includes/pagination.html" %}
-
+            {% include "includes/pagination.html" %}
         </div>
         <div class="col-lg-4 lonely-column">
             <div class="card mb-3">
@@ -65,18 +34,18 @@
                     <div class="container-fluid mt-3">
                         <div class="row">
                             <div class="card-text col-6 px-0">
-                                <h6 class=" font-weight-bold">Karma</h6>
+                                <h6 class=" font-weight-bold">{% trans %}Karma{% endtrans %}</h6>
                                 <span class="small">{{ user.karma_count }}</span> <i class="fas fa-sun small text-warning"></i>
                             </div>
                             <div class="card-text col-6 px-0">
-                                <h6 class="font-weight-bold">Cake day</h6>
+                                <h6 class="font-weight-bold">{% trans %}Cake day{% endtrans %}</h6>
                                 <i class="fas fa-birthday-cake text-info small"></i> <span class="small">{{ user.cake_day.strftime('%Y-%m-%d') }}</span>
                             </div>
                         </div>
                     </div>
                     {% if user.username == current_user.username %}
                     <div class="mt-4">
-                        <button class="btn btn-primary btn-block" type="button">New Post</button>
+                        <button class="btn btn-primary btn-block" type="button">{% trans %}New Post{% endtrans %}</button>
                     </div>
                     {% endif %}
                 </div>
@@ -91,7 +60,7 @@
                     {% for subs in user.subscriptions %}
                     <li class="list-group-item">{{ subs.name_with_prefix }}</li>
                     {% else %}
-                    <li class="list-group-item small">No subscriptions...</li>
+                    <li class="list-group-item small">{% trans %}No subscriptions...{% endtrans %}</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -102,23 +71,17 @@
                 </div>
                 <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
                     {% for commune in user.community_maintainer|sort(attribute='name') %}
-                    <li class="list-group-item">{{ commune.name_with_prefix }}</li>
+                    <li class="list-group-item"><a href="{{ url_for('community', community=commune.name) }}">{{ commune.name_with_prefix }}</a></li>
                     {% else %}
-                    <li class="list-group-item small">You don't maintain any communities</li>
+                    <li class="list-group-item small">{% trans %}You don't maintain any communities{% endtrans %}</li>
                     {% endfor %}
                 </ul>
                 <div class="card-body">
-                    <a href="{{ url_for('community_create') }}" class="btn btn-success btn-block"">Create a Community</a>
+                    <a href="{{ url_for('community_create') }}" class="btn btn-success btn-block"">{% trans %}Create a Community{% endtrans %}</a>
                 </div>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block js %}
-$('document').ready(function() {
-   
-});
 {% endblock %}

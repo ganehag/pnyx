@@ -3,7 +3,7 @@
 {% block title %}{{ entry.title }}{% endblock %}
 
 {% block page_header %}
-<div class="container-fluid" style="max-width: 1720px;">
+<div class="col mx-auto wider-max semi-transparent">
   <h2 class="pt-3 pb-3">
   	<a class="text-primary" href="{{ url_for('community', community=community.name) }}">c/{{ entry.community.name }}</a>
   </h2>
@@ -11,13 +11,13 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid" style="max-width: 1720px;">
-<div class="row">
+<div class="container-fluid">
+<div class="row mx-auto wider-max">
 
-	<div class="col-md">
+	<div class="col-lg">
 		<div class="card mb-3">
 			<div class="card-body" style="margin-left: 40px">
-				<div style="float: left; margin-left: -50px; width: 40px; text-align: center;">
+				<div class="float-left" style="margin-left: -50px; width: 40px; text-align: center;">
 					<div>
 						<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
 					</div>
@@ -28,7 +28,7 @@
 				</div>
 
 				<h7 class="card-text text-muted" style="font-size: 8pt;">
-					Posted by <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+					{% trans %}Posted by{% endtrans %} <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
 					<span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
 				</h7>
 				
@@ -49,11 +49,12 @@
 	            		<textarea class="form-control" style="height: 150px;" id="content" name="content" placeholder="What are your thoughts?"></textarea>
 	          		</div>
 					<div class="text-right mb-3">
-						<button class="btn btn-success">Comment</button>
+						<button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
 					</div>
 				</form>
 			</div>
 		</div>
+
 		<div class="card mb-3">
 			<div id="reply-loc" style="display: none;">
 				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
@@ -63,7 +64,7 @@
 	            		<textarea class="form-control" style="height: 150px;" name="content" placeholder="What are your thoughts?"></textarea>
 	          		</div>
 					<div class="text-right mb-3">
-						<button class="btn btn-success">Comment</button>
+						<button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
 					</div>
 				</form>
 			</div>
@@ -79,16 +80,16 @@
 						<h6 class="small text-muted">
 							<a href="{{ url_for('user_page', user=reply.username) }}">{{ reply.username }}</a> | 
 							<span class="timeago">{{ reply.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span> |
-							Points: <span class="comment-score">{{ reply.score }}</span>
+							{% trans %}Points{% endtrans %}: <span class="comment-score">{{ reply.score }}</span>
 						</h6>
 						<div class="card-text">
 							{{ reply.content }}
 						</div>
 						<div class="comment-area"></div>
 						<div class="comment-toolbar small">
-							<button type="button" data-id="{{ reply.id }}" class="btn btn-xs btn-link btn-reply text-muted"><i class="fas fa-comment-alt"></i> Reply</button>
-							<button type="button" class="btn btn-xs btn-link btn-share text-muted">Share</button>
-							<button type="button" class="btn btn-xs btn-link btn-report text-muted">Report</button>
+							<button type="button" data-id="{{ reply.id }}" class="btn btn-xs btn-link btn-reply text-muted"><i class="fas fa-comment-alt"></i> {% trans %}Reply{% endtrans %}</button>
+							<button type="button" class="btn btn-xs btn-link btn-share text-muted">{% trans %}Share{% endtrans %}</button>
+							<button type="button" class="btn btn-xs btn-link btn-report text-muted">{% trans %}Report{% endtrans %}</button>
 						</div>
 					</li>
 					{%- if reply.comments %}
@@ -96,19 +97,21 @@
 					{%- endif %}
 				</ul>
 				{% else %}
-				<div class="card-text">No comments, so far.</div>
+				<div class="card-text">{% trans %}No comments, so far.{% endtrans %}</div>
 				{% endfor %}
 			</div>
 		</div>
 	</div>
 
-	<div class="col-md-4 col-lg-3">
+	<div class="col-lg-4 lonely-column">
      <div class="card mb-3">
       <div class="card-header">
-        <h6 class="card-title mb-0">Community Details</h6>
+        <h6 class="card-title mb-0">{% trans %}Community Details{% endtrans %}</h6>
       </div>
       <div class="card-body">
-        <h6 class="mb-3">c/{% if community != None %}{{ community.name }}{% else %}all{% endif %}</h6>
+        <h5 class="mb-3 font-weight-bold">
+            {% if community != None %}{{ community.name_with_prefix }}{% else %}c/new{% endif %}
+        </h5>
         <div class="card-text" style="word-wrap:break-word;">
           {% if community %}
           <div class="mb-3">
@@ -124,11 +127,11 @@
         {% if community %}
 
           {% if not community.current_user_subscribed %}
-          <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+          <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">{% trans %}Subscribe{% endtrans %}</a>
           {% endif %}
-          <a href="{{ url_for('submit', community=community.name) }}" class="btn btn-success btn-block">Create Post</a>
+          <a href="{{ url_for('submit', community=community.name) }}" class="btn btn-success btn-block">{% trans %}Create Post{% endtrans %}</a>
           {% else %}
-          <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">Create Post</a>
+          <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">{% trans %}Create Post{% endtrans %}</a>
         {% endif %}
         
       </div>
@@ -136,7 +139,7 @@
 
      <div class="card mb-3">
       <div class="card-header">
-        <h6 class="card-title mb-0">Community Rules</h6>
+        <h6 class="card-title mb-0">{% trans %}Community Rules{% endtrans %}</h6>
       </div>
       <ul class="list-group list-group-flush">
         <li class="list-group-item">1.1. No hate</li>
@@ -147,8 +150,6 @@
      </div>
 
      {% include "side_footer.html" %}
-
-
 
 	</div>
 </div>
@@ -185,6 +186,11 @@ $('document').ready(function() {
 			e.preventDefault();
 
 			var jqxhr = $.getJSON($(self).data('target'), function(result) {
+                if(result && result.error && result.code == 401) {
+                  $('#loginModal').modal('show');
+                  return;
+                }
+
 				var vote_counter = $(self).closest('ul.comment').find('span.comment-score:first');
         		vote_counter.text(result.score);
 
@@ -219,6 +225,11 @@ $('document').ready(function() {
 			e.preventDefault();
 
 			var jqxhr = $.getJSON($(self).data('target'), function(result) {
+                if(result && result.error && result.code == 401) {
+                  $('#loginModal').modal('show');
+                  return;
+                }
+
 		        var vote_counter = $(self).parent().parent().find('span.vote-counter')
 		        vote_counter.text(result.votes);
 

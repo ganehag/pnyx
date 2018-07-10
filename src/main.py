@@ -24,6 +24,8 @@ from flask_login import (
     login_required, login_user, logout_user
 )
 
+from flask_babel import Babel, gettext, ngettext
+
 from form import LoginForm, RegisterForm, CommunityCreateForm
 
 import peewee
@@ -57,13 +59,19 @@ def create_app(config_file='config.yaml'):
         except Exception as e:
             print("No configuration", e)
 
-    app = Flask(__name__)
+    app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config.from_mapping(config.get(config.get('instance')))
     logging.config.dictConfig(config.get(config.get('instance')).get('logging', {}))
+
+    if 'BABEL_TRANSLATION_DIRECTORIES' not in app.config.keys():
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations;../translations'
+
     return app
 
 
 app = create_app("config.yaml")
+
+babel = Babel(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -79,6 +87,7 @@ db.init_app(app)
 database = db.database
 
 @app.route('/submit_comment', methods=['POST'])
+@login_required
 def submit_comment():
     comment = Comment()
 
@@ -503,9 +512,7 @@ def login():
 
         login_user(user)
 
-        flash('Logged in successfully.')
-
-        return form.redirect('index')
+        return render_template('login.html') # form.redirect('index')
 
     return render_template('login.html', form=form, next=request.args.get('next'))
 
@@ -613,10 +620,39 @@ def load_user(user_id):
         return AnonymousUser()
     return user
 
+def request_wants_json():
+    best = request.accept_mimetypes \
+        .best_match(['application/json', 'text/html'])
+    return best == 'application/json' and \
+        request.accept_mimetypes[best] > \
+        request.accept_mimetypes['text/html']
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    if request_wants_json():
+        return jsonify({"error": "unauthorized", "code": 401})
+    # do stuff
+    return redirect(url_for('login'))
+
 @app.errorhandler(404)
 def not_found(exc):
+    from flask_babel import get_locale, get_translations
+    print(get_locale(), get_translations())
+
+    print(gettext('My Profile'))
+
     return render_template('404.html'), 404
 
+
+#
+# Babel
+#
+
+@babel.localeselector
+def get_locale():
+    if current_user.is_authenticated:
+        return current_user.locale
+    return request.accept_languages.best_match(['sv', 'es', 'de', 'fr', 'en'])
 
 login_manager.init_app(app)
 
@@ -627,6 +663,6 @@ if __name__ == '__main__':
         #     db.session.commit()
         # with database:
         database.create_tables([Comment, User, Community, CommunityUser, Proposal, CommentVote, PostVote])
-        print("Database tables created")
+        print(gettext("Database tables created"))
     else:
         app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)
