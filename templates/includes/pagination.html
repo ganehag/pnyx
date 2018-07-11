@@ -1,5 +1,5 @@
 {% if pagination and pagination.get_page_count() > 1 %}
-<ul class="pagination justify-content-center">
+<ul class="pagination justify-content-center mt-4">
   {% if pagination.get_page() > 1 %}
     <li class="page-item">
       <a class="page-link" href="?{{ request.args|clean_querystring('page', page=pagination.get_page() - 1) }}" aria-label="Previous">

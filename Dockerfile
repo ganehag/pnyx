@@ -5,10 +5,11 @@ LABEL maintainer Mikael Ganehag Brorsson <mikael.brorsson@gmail.com>
 ENV HOME /home/docker/code/app
 
 COPY requirements.txt /tmp/
-COPY form.py main.py models.py application.py /home/docker/code/app/
+COPY src/form.py src/main.py src/models.py application.py /home/docker/code/app/src/
 COPY static /home/docker/code/app/static
 COPY templates /home/docker/code/app/templates
-COPY run.sh /home/docker/code/app/
+COPY translations /home/docker/code/app/translations
+COPY run.sh /home/docker/code/app/src/
 
 RUN apk add --update --no-cache ca-certificates tini
 
@@ -30,12 +31,9 @@ RUN apk add --no-cache --update python3 libpq libxslt xmlsec && \
   pip3 install -r /tmp/requirements.txt && \
   rm /tmp/requirements.txt && \
   \
-  mkdir -p /home/docker/code/app/saml && \
-  ln -sf /etc/wmbusgw/config.cfg /home/docker/code/app/config.cfg && \
-  ln -sf /etc/wmbusgw/config.yaml /home/docker/code/app/config.yaml && \
-  ln -sf /etc/wmbusgw/config.yaml /home/docker/code/app/server.cfg && \
-  ln -sf /etc/wmbusgw/settings.json /home/docker/code/app/saml/settings.json && \
-  ln -sf /etc/wmbusgw/advanced_settings.json /home/docker/code/app/saml/advanced_settings.json && \
+  ln -sf /etc/pnyx/config.yaml /home/docker/code/app/src/config.cfg && \
+  ln -sf /etc/pnyx/config.yaml /home/docker/code/app/src/config.yaml && \
+  ln -sf /etc/pnyx/config.yaml /home/docker/code/app/src/server.cfg && \
   \
   echo "====> clean up..." && \
   apk del build-dependencies
@@ -43,7 +41,7 @@ RUN apk add --no-cache --update python3 libpq libxslt xmlsec && \
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
-WORKDIR /home/docker/code/app
+WORKDIR /home/docker/code/app/src
 
 EXPOSE 80
 

@@ -25,6 +25,7 @@ from flask_login import (
 )
 
 from flask_babel import Babel, gettext, ngettext
+from flask_compress import Compress
 
 from form import LoginForm, RegisterForm, CommunityCreateForm
 
@@ -72,6 +73,8 @@ def create_app(config_file='config.yaml'):
 app = create_app("config.yaml")
 
 babel = Babel(app)
+
+Compress(app)
 
 login_manager = LoginManager()
 login_manager.login_view = "login"
@@ -636,11 +639,6 @@ def unauthorized():
 
 @app.errorhandler(404)
 def not_found(exc):
-    from flask_babel import get_locale, get_translations
-    print(get_locale(), get_translations())
-
-    print(gettext('My Profile'))
-
     return render_template('404.html'), 404
 
 

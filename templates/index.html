@@ -1,18 +1,26 @@
 {% extends "base.html" %}
 
+{% if community %}
+{% block meta_description %}
+{{ community.name_with_prefix }}: {{ community.description }}
+{% endblock %}
+{% endif %}
+
 {% block title %}
-c/{% if community %}{{ community.name }}{% else %}new{% endif %}
+{% if community %}{{ community.name_with_prefix }}{% else %}c/new{% endif %}
 {% endblock %}
 
 {% block page_header %}
-<div class="container semi-transparent">
-  <h2 class="pt-3 pb-3">
+<div class="container">
+  <h3 class="pt-3 pb-3 my-2">
+    <span class="semi-transparent">
     {% if community %}
     <a class="text-primary" href="{{ url_for('community', community=community.name) }}">c/{{ community.name }}</a>
     {% else %}
     <span class="text-primary">c/{% if community != None %}{{ community.name }}{% else %}new{% endif %}</span>
     {% endif %}
-  </h2>
+    </span>
+  </h3>
 </div>
 {% endblock %}
 

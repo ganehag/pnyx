@@ -3,10 +3,12 @@
 {% block title %}{{ user.username }} ({{user.username_with_prefix}}){% endblock %}
 
 {% block page_header %}
-<div class="container semi-transparent">
-    <h2 class="pt-3 pb-3">
-        <a class="text-primary" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
-    </h2>
+<div class="container">
+    <h3 class="pt-3 pb-3 my-2">
+        <span class="semi-transparent">
+            <a class="text-primary" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
+        </span>
+    </h3>
 </div>
 {% endblock %}
 

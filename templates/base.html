@@ -9,20 +9,14 @@
     <meta name="MobileOptimized" content="320">
     <meta name="HandheldFriendly" content="True">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="description" content="{% block meta_description %}For democracy!{% endblock %}">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
-    <meta name="robots" content="noindex">
 
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}">
 
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha256-Md8eaeo67OiouuXAi8t/Xpd8t2+IaJezATVTWbZqSOw=" crossorigin="anonymous" /> -->
-
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous">
-
-
-    <!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/choices.js/3.0.4/styles/css/base.min.css" integrity="sha256-k2svpFg81Ot54NOWYxvMel4YaupN/Uj1BcHkFikoeIw=" crossorigin="anonymous" />-->
-
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/solid.css" integrity="sha384-TbilV5Lbhlwdyc4RuIV/JhD8NR+BfMrvz4BL5QFa2we1hQu6wvREr3v6XSRfCTRp" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/fontawesome.css" integrity="sha384-ozJwkrqb90Oa3ZNb+yKFW2lToAWYdTiF1vt8JiH5ptTGHTGcN7qdoR1F95e0kYyG" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css" integrity="sha256-xJOZHfpxLR/uhh1BwYFS5fhmOAdIRQaiOul5F/b7v3s=" crossorigin="anonymous" />
 
     
@@ -30,21 +24,15 @@
     <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}">
     {% endassets %}
 
-    {#
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/selectize.bootstrap4.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/pnyx.css') }}" />
-    #}
     {% block extra_head %}{% endblock %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha256-xaF9RpdtRxzwYMWg4ldJoyPWqyDPCRD0Cv7YEEe6Ie8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slideout/1.0.1/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.5/js/standalone/selectize.min.js" integrity="sha256-ZUrobNnm8+P2vPGUWYJ4BIGF08HWii4FKrAlZ+1cbr0=" crossorigin="anonymous"></script>
 
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js" integrity="sha256-FcVIknBiVRk5KLQeIBb9VQdtFRMqwffXyZ+D8q0gQro=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha256-xaF9RpdtRxzwYMWg4ldJoyPWqyDPCRD0Cv7YEEe6Ie8=" crossorigin="anonymous" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js" integrity="sha256-FA14tBI8v+/1BtcH9XtJpcNbComBEpdawUZA6BPXRVw=" crossorigin="anonymous"></script>
 
     {% block extra_scripts %}{% endblock %}
   </head>
@@ -53,8 +41,8 @@
     
     <div id="menu">
 
+      {% if current_user.is_authenticated %}
       <div class="d-flex align-items-center px-3 bg-white" style="height: 78px;">
-        {% if current_user.is_authenticated %}
         <i class="fas fa-user-circle fa-lg"></i>
         <div class="ml-3">
           <div class="nav_username text-primary font-weight-bold small">
@@ -65,8 +53,8 @@
               <span class="karma">{% trans %}karma{% endtrans %}</span>
           </div>
         </div>
-        {% endif %}
       </div>
+      {% endif %}
 
       <div class="container mt-3">
         <!-- select community -->
@@ -102,7 +90,7 @@
     <div class="container-fluid">
     <div class="row flex-fill">
       <div class="col-2 col-lg-4 col-xl-4">
-        <button class="btn btn-outline-light toggle-button d-lg-none"><img src="{{ url_for('static', filename='images/hamburger-menu-icon.svg') }}" height="25"></button>
+        <button class="btn btn-outline-light toggle-button d-lg-none" type="button"><img src="{{ url_for('static', filename='images/hamburger-menu-icon.svg') }}" height="25" alt="Menu"></button>
 
         <a class="navbar-brand d-none d-lg-block float-left" style="font-size: 1rem" href="{{ url_for('index') }}">
           <img src="{{ url_for('static', filename='images/pnyx-with-text.svg') }}" height="25" alt="">
@@ -110,7 +98,7 @@
         
         <!-- select community -->
         <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 300px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
-          <select class="form-control nav-communitylist-select" style="width: 100%;" name="nav-communitylist-select" placeholder="{% trans %}Select a Community...{% endtrans %}">
+          <select class="form-control nav-communitylist-select w-100" name="nav-communitylist-select" placeholder="{% trans %}Select a Community...{% endtrans %}">
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
@@ -122,7 +110,7 @@
 
       <div class="col">
         <form action="{{ url_for('search') }}" id="search-form" method="get" role="search" class="form-inline d-xl-flex">      
-          <input class="form-control mr-sm-2 bg-light" style="width: 100%;" type="search" name="q" placeholder="{% trans %}Search{% endtrans %}" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
+          <input class="form-control mr-sm-2 w-100" type="search" name="q" placeholder="{% trans %}Search{% endtrans %}" aria-label="Search" value="{% if search %}{{ search }}{% endif %}">
         </form>
       </div>
 
@@ -202,7 +190,7 @@
     </div>
 
 
-      <div class="mt-3">
+      <div class="mt-4">
       {% block content %}{% endblock %}
       </div>
 
