@@ -9,6 +9,7 @@ import logging.config
 import sys
 import hashlib
 import math
+import datetime
 
 import yaml
 
@@ -35,7 +36,7 @@ from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser, 
-    Proposal, CommentVote, PostVote, db)
+    Proposal, CommentVote, PostVote, Moderator, db)
 
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
@@ -168,7 +169,7 @@ def submit(user=None, community=None):
                     if entry.published:
                         return redirect(url_for('detail', community=entry.community.name, slug=entry.slug))
                     else:
-                        return 404
+                        abort(404)
 
         except peewee.DoesNotExist:
             flash('Community and Title are required.', 'error')
@@ -177,6 +178,28 @@ def submit(user=None, community=None):
         community = Community.get_or_none(Community.name == community)
 
     return render_template('submit.html', entry=entry, community=community)
+
+
+@app.route('/p/<slug>/edit', methods=['GET', 'POST'])
+@login_required
+def post_edit(slug):
+    entry = get_object_or_404(Proposal, Proposal.slug == slug)
+    if entry.author_id != current_user.id:
+        abort(404)
+
+    if request.method == 'POST':
+        with database.atomic():
+
+            entry.modified = datetime.datetime.now()
+            entry.content = request.form.get('content') or ''
+            entry.save()
+
+            print(entry.modified)
+
+        return redirect(url_for('detail', slug=entry.slug, community=entry.community.name))
+    
+    return render_template('submit.html', entry=entry, community=entry.community)
+
 
 @app.route('/u/<user>', methods=["GET", "POST"])
 def user_page(user):
@@ -231,6 +254,7 @@ def detail(community, slug):
     community_id = Community.get_or_none(Community.name == community)
     entry = get_object_or_404(query, Proposal.slug == slug, Proposal.community == community_id)
     return render_template('detail.html', entry=entry, community=community_id)
+
 
 @app.route('/community/create', methods=['GET', 'POST'])
 @login_required
@@ -652,15 +676,15 @@ def get_locale():
         return current_user.locale
     return request.accept_languages.best_match(['sv', 'es', 'de', 'fr', 'en'])
 
+def create_db_tables():
+    database.create_tables([Comment, User, Community, CommunityUser, Proposal, 
+                            CommentVote, PostVote, Moderator])
+
 login_manager.init_app(app)
 
 if __name__ == '__main__':
     if "--setup" in sys.argv:
-        # with app.app_context():
-        #     db.create_all()
-        #     db.session.commit()
-        # with database:
-        database.create_tables([Comment, User, Community, CommunityUser, Proposal, CommentVote, PostVote])
+        create_db_tables()
         print(gettext("Database tables created"))
     else:
         app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)

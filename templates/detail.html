@@ -29,10 +29,19 @@
 					</div>
 				</div>
 
-				<h7 class="card-text text-muted" style="font-size: 8pt;">
-					{% trans %}Posted by{% endtrans %} <a class="text-muted" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
-					<span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-				</h7>
+                {% if entry.author_id == current_user.id %}
+                <div class="float-right">
+                    <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-primary">{% trans %}Edit{% endtrans %}</a>
+                </div>
+                {% endif %}
+
+                <span style="font-size: 80%;" class="card-text text-primary">
+                {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+                    <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% if entry.modified %}
+                    | <span class="badge badge-info">{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+                {% endif %}
+                </span>
 				
 				<h4 class="card-title">{{ entry.title }}</h4>
 				

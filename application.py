@@ -10,13 +10,7 @@ def create_app():
 
 if __name__ == '__main__':
     if "--setup" in sys.argv:
-        main.database.create_tables([main.Comment,
-                                     main.User,
-                                     main.Community,
-                                     main.CommunityUser,
-                                     main.Proposal,
-                                     main.CommentVote,
-                                     main.PostVote])
+        main.create_db_tables()
         print("Database tables created")
 
     else:

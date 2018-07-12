@@ -222,10 +222,24 @@ class Proposal(db.Model):
     search_content = TSVectorField()
 
     published = BooleanField(index=True)
+
     upvotes = IntegerField(default=0)
     downvotes = IntegerField(default=0)
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
+    modified = DateTimeField(default=None, null=True)
 
+    @classmethod
+    def all(cls):  # Except search content
+        return Proposal.select(Proposal.community,
+                               Proposal.title,
+                               Proposal.slug,
+                               Proposal.author,
+                               Proposal.content,
+                               Proposal.published,
+                               Proposal.upvotes,
+                               Proposal.downvotes,
+                               Proposal.timestamp,
+                               Proposal.modified)
 
     def save(self, *args, **kwargs):
         # Generate a URL-friendly representation of the entry's title.
@@ -319,11 +333,11 @@ class Proposal(db.Model):
 
     @classmethod
     def public(cls):
-        return Proposal.select().where(Proposal.published == True)
+        return Proposal.all().where(Proposal.published == True)
 
     @classmethod
     def drafts(cls):
-        return Proposal.select().where(Proposal.published == False)
+        return Proposal.all().where(Proposal.published == False)
 
     @property
     def comment_count(self):
@@ -419,3 +433,12 @@ class PostVote(db.Model):
         indexes = (
             (('post', 'user'), True),
         )
+
+class Moderator(db.Model):
+    user = ForeignKeyField(User)
+    community = ForeignKeyField(Community)
+
+    class Meta:
+        indexes = (
+            (('user', 'community'), True),
+        )    

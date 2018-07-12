@@ -59,23 +59,26 @@
         </div>
     </div>
 
-    <div>
+    <div style="font-size: 80%">
       {% if community == None %}
-      <h7 class="card-text float-left">
+      <span class="card-text">
         <a href="{{ url_for('community', community=entry.community.name) }}">
           c/{{ entry.community.name }}
         </a>
-      </h7>
-      <h7 class="card-text text-primary float-left">&nbsp;•&nbsp;</h7>
+      </span>
+      <span class="card-text text-primary">&nbsp;•&nbsp;</span>
       {% endif %}
-      <h7 class="card-text text-primary" style="font-size: 8pt;">
-        Posted by <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+      <span class="card-text text-primary">
+        {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
         <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-      </h7>
+        {% if entry.modified %}
+        | <span class="badge badge-info">{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+        {% endif %}
+      </span>
     </div>
 
-    <h4 class="card-title">
-      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
+    <h4 class="card-title" style="font-weight: 500;">
+      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
         {{ entry.title }}
       </a>
     </h4>
