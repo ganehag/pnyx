@@ -24,6 +24,7 @@ RUN apk add --no-cache --update python3 libpq libxslt xmlsec && \
     python3-dev \
     libxslt-dev \
     xmlsec-dev \
+    libmemcached-dev \
     postgresql-dev && \
   ln -sf /usr/include/locale.h /usr/include/xlocale.h && \
   \
