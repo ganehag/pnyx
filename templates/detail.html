@@ -80,36 +80,14 @@
 				</form>
 			</div>
 			<div id="comments" class="card-body">
-				{% for key, reply in entry.comments.items() recursive %}
-				<ul class="comment" style="position: relative;">
-					<li class="mb-4">
-						<div style="float: left; left: -8px; position: absolute; width: 16px; text-align: center; background-color: #FFF;">
-							<a class="comment-vote-btn" href="{{ url_for('comment_upvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
-							<a class="comment-vote-btn" href="{{ url_for('comment_downvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
-						</div>
+				{% include 'includes/comments.html' %}
 
-						<h6 class="small text-muted">
-							<a href="{{ url_for('user_page', user=reply.username) }}">{{ reply.username }}</a> | 
-							<span class="timeago">{{ reply.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span> |
-							{% trans %}Points{% endtrans %}: <span class="comment-score">{{ reply.score }}</span>
-						</h6>
-						<div class="card-text">
-							{{ reply.content }}
-						</div>
-						<div class="comment-area"></div>
-						<div class="comment-toolbar small">
-							<button type="button" data-id="{{ reply.id }}" class="btn btn-xs btn-link btn-reply text-muted"><i class="fas fa-comment-alt"></i> {% trans %}Reply{% endtrans %}</button>
-							<button type="button" class="btn btn-xs btn-link btn-share text-muted">{% trans %}Share{% endtrans %}</button>
-							<button type="button" class="btn btn-xs btn-link btn-report text-muted">{% trans %}Report{% endtrans %}</button>
-						</div>
-					</li>
-					{%- if reply.comments %}
-					{{ loop(reply.comments.items()) }}
-					{%- endif %}
-				</ul>
-				{% else %}
-				<div class="card-text">{% trans %}No comments, so far.{% endtrans %}</div>
-				{% endfor %}
+                {% if entry.num_remaining_comments > 0 %}
+                <button id="btn-load-comments" class="btn btn-link">{{ entry.num_remaining_comments }} {% trans %}more replies{% endtrans %}</button>
+                <div id="load-more-comments" class="d-none">
+                    <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+                </div>
+                {% endif %}
 			</div>
 		</div>
 	</div>
@@ -168,62 +146,80 @@
 
 {% block js %}
 $('document').ready(function() {
+    function vote_btn() {
+        $('a.comment-vote-btn').each(function(item) {
+            var self = this;
+            var target = $(this).attr('href');
+
+            $(this).data('target', target);
+            $(this).attr('href', '#');
+
+            $(this).click(function(e) {
+                e.preventDefault();
+
+                var jqxhr = $.getJSON($(self).data('target'), function(result) {
+                    if(result && result.error && result.code == 401) {
+                      $('#loginModal').modal('show');
+                      return;
+                    }
+
+                    var vote_counter = $(self).closest('ul.comment').find('span.comment-score:first');
+                    vote_counter.text(result.score);
+
+                    var element = $('<span class="vote-counter-info small">'+result.diff+'</span>').appendTo($(self));
+                    element.focus();
+                    element.toggleClass('show');
+                    if(parseInt(result.diff) < 0) {
+                      element.addClass('downvote');
+                    }
+
+                    setTimeout(function() {
+                      element.toggleClass('hide');
+                      setTimeout(function() {
+                        element.remove();
+                      }, 300);
+                    }, 500);
+
+                    $('#porte-monnaie').trigger('amount');
+                }).fail(function() {
+                    
+                });
+            });
+        });
+    }
+
+    vote_btn();
+
+    $('#btn-load-comments').click(function(e) {
+        e.preventDefault();
+
+        $('#load-more-comments').removeClass('d-none');
+        $(this).hide();
+
+        $.ajax({
+            url: '{{ url_for('all_comments_for_post', slug=entry.slug) }}'
+        }).done(function(reply) {
+            $('#comments').html(reply);
+
+            momentify();
+        });
+    });
+
 	$('button.btn-reply').click(function(e) {
 		e.preventDefault();
-
 		var comment_area = $(this).parent().siblings().filter('.comment-area');
 		if(comment_area.children().length) {
 			comment_area.children().remove();
 		} else {
-
 			var ta = $('#new_reply_template')
 				.clone()
 				.appendTo($(this).parent().siblings().filter('.comment-area'))
 				.addClass('mt-3');
-
 			ta.find('input[name=parent]').val($(this).data('id'));
-
 		}
 	});
 
-	$('a.comment-vote-btn').each(function(item) {
-		var self = this;
-		var target = $(this).attr('href');
-		$(this).data('target', target);
-
-		$(this).attr('href', '#');
-		$(this).click(function(e) {
-			e.preventDefault();
-
-			var jqxhr = $.getJSON($(self).data('target'), function(result) {
-                if(result && result.error && result.code == 401) {
-                  $('#loginModal').modal('show');
-                  return;
-                }
-
-				var vote_counter = $(self).closest('ul.comment').find('span.comment-score:first');
-        		vote_counter.text(result.score);
-
-		        var element = $('<span class="vote-counter-info small">'+result.diff+'</span>').appendTo($(self));
-		        element.focus();
-		        element.toggleClass('show');
-		        if(parseInt(result.diff) < 0) {
-		          element.addClass('downvote');
-		        }
-
-		        setTimeout(function() {
-		          element.toggleClass('hide');
-		          setTimeout(function() {
-		            element.remove();
-		          }, 300);
-		        }, 500);
-
-				$('#porte-monnaie').trigger('amount');
-			}).fail(function() {
-				
-			});
-		});
-	});
+	
 
 	$('a.vote-btn').each(function(item) {
 		var self = this;

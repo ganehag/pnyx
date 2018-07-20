@@ -7,28 +7,30 @@ import json
 import logging
 import logging.config
 import sys
+import re
 import hashlib
 import math
 import datetime
-
+import time
 import yaml
 
-from urllib.parse import urlparse, urljoin, urlencode
+from itertools import groupby
 
+from urllib.parse import urlparse, urljoin, urlencode
 
 from flask import (Flask, abort, flash, Markup, redirect, render_template,
                    request, Response, session, url_for, jsonify)
 from flask_assets import Environment, Bundle
-
 from flask_login import (
     LoginManager, current_user,
     login_required, login_user, logout_user
 )
-
 from flask_babel import Babel, gettext, ngettext
+from flask_caching import Cache
 from flask_compress import Compress
 
-from form import LoginForm, RegisterForm, CommunityCreateForm
+
+from form import LoginForm, RegisterForm, CommunityCreateForm, Select2MultipleField
 
 import peewee
 
@@ -36,7 +38,9 @@ from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser, 
-    Proposal, CommentVote, PostVote, Moderator, db)
+    Proposal, CommentVote, PostVote, Moderator, Tag, db)
+
+from slugify import slugify
 
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
@@ -63,6 +67,7 @@ def create_app(config_file='config.yaml'):
 
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
     app.config.from_mapping(config.get(config.get('instance')))
+
     logging.config.dictConfig(config.get(config.get('instance')).get('logging', {}))
 
     if 'BABEL_TRANSLATION_DIRECTORIES' not in app.config.keys():
@@ -74,6 +79,8 @@ def create_app(config_file='config.yaml'):
 app = create_app("config.yaml")
 
 babel = Babel(app)
+
+cache = Cache(app)
 
 Compress(app)
 
@@ -89,6 +96,7 @@ assets.register('css_all', css)
 
 db.init_app(app)
 database = db.database
+app.database = database
 
 @app.route('/submit_comment', methods=['POST'])
 @login_required
@@ -132,6 +140,7 @@ def submit_comment():
 @app.route('/submit', methods=['GET', 'POST'])
 @app.route('/c/<community>/submit', methods=['GET', 'POST'])
 @app.route('/u/<user>/submit', methods=['GET', 'POST'])
+@cache.cached(timeout=50)
 @login_required
 def submit(user=None, community=None):
     entry = Proposal(community='', title='', content='')
@@ -241,6 +250,7 @@ def community_subscribe(community):
 #
 
 @app.route('/c/<community>')
+@cache.cached(timeout=50)
 def community(community):
     community_ref = Community.get_or_none(Community.name == community)
     return object_list('index.html',
@@ -249,12 +259,17 @@ def community(community):
         check_bounds=False)
 
 @app.route('/c/<community>/<slug>')
+@cache.cached(timeout=50)
 def detail(community, slug):
     query = Proposal.public()
     community_id = Community.get_or_none(Community.name == community)
     entry = get_object_or_404(query, Proposal.slug == slug, Proposal.community == community_id)
     return render_template('detail.html', entry=entry, community=community_id)
 
+@app.route('/community/slug_gen', methods=['GET'])
+@login_required
+def community_slug_generate():
+    return jsonify({"slug": slugify(request.args.get('t', ''))})
 
 @app.route('/community/create', methods=['GET', 'POST'])
 @login_required
@@ -262,9 +277,12 @@ def detail(community, slug):
 def community_create():
     form = CommunityCreateForm()
 
+    form.tags.choices = [(t.title, t.title) for t in Tag.select(Tag.title).order_by(Tag.title).distinct()]
+
     if form.validate_on_submit() and current_user.karma >= 50:
         community = Community()
-        community.name = form.name.data
+
+        community.name = slugify(form.name.data)
         community.description = form.description.data
         community.maintainer = User.get(User.id == current_user.id)
 
@@ -274,14 +292,32 @@ def community_create():
         user.karma -= 50
         user.save()
 
+        success = True
+
         try:
             community.save()
 
         except peewee.IntegrityError as e:
-            print(e)
-            flash('This name is already in use.', 'error')
+            flash(gettext('This name is already in use.'), 'error')
+            success = False
 
         else:
+            try:
+                for element in form.tags.data.split(','):
+                    if not element:
+                        continue
+
+                    tag = Tag()
+                    # FIXME: slugify?
+                    tag.title = element
+                    tag.community = community
+                    tag.save()
+
+            except peewee.IntegrityError as e:
+                flash(gettext('Unable to add tags.'), 'error')
+                success = False
+
+        if success:
             return redirect(url_for('community', community=community.name))
 
     return render_template('community_create.html', form=form)
@@ -311,7 +347,7 @@ def community_search():
         })
 
     feeds = [
-        {"id": "", "text": "Home"},
+        {"id": "", "text": "Frontpage"},
         {"id": "c/popular", "text": "Popular"},
         {"id": "c/new", "text": "New"},
         {"id": "c/upvote", "text": "Most upvoted"}
@@ -511,6 +547,16 @@ def comment_downvote(slug, comment_id):
 
     return jsonify(result)
 
+#
+# Proposal load all comments
+#
+
+@app.route('/p/<slug>/comments', methods=['GET'])
+@cache.cached(timeout=50)
+def all_comments_for_post(slug):
+    entry = get_object_or_404(Proposal, Proposal.slug == slug)
+    return render_template('includes/comments.html', entry=entry, load_all=True)
+
 
 #
 # Login/Logout/Register
@@ -581,7 +627,6 @@ def register():
 @app.route('/c/upvote')
 @app.route('/c/popular')
 @app.route('/c/new')
-@app.route('/')
 def index():
     query = Proposal.public()
 
@@ -609,6 +654,54 @@ def index():
         query,
         community=community,
         check_bounds=False)
+
+
+@app.route('/')
+def frontpage():
+    result = []
+    for key, grp in groupby(Tag.communities(), key=lambda x: x.tag_title):
+        grp = sorted(list(grp), key=lambda x: x.tag_title)[:50]
+
+        for i in grp:
+            i.color = Community.rgbcolor(i.community_name.encode())
+
+        post_count = sum([x.post_count for x in grp])
+
+        result.append({
+            "title": key, 
+            "count": len(grp),
+            "communities": grp,
+            "total_post_count": post_count
+        })
+
+    result = sorted(result, key=lambda x: x['count'], reverse=True)
+
+    posts = (Proposal.select(
+                    Proposal.title, 
+                    Proposal.slug,
+                    Proposal.author,
+                    Proposal.timestamp,
+                    Community.name.alias('communityname'))
+        .join(Community)
+        .where(Proposal.published == True)
+        .order_by(Proposal.timestamp.desc())
+        .limit(20))
+
+    pres = []
+    for x in posts.objects():
+        pres.append({
+            "title": x.title,
+            "slug": x.slug,
+            "author": x.author,
+            "timestamp": x.timestamp,
+            "community_name": x.communityname,
+            "color": Community.rgbcolor(x.communityname.encode())
+        })
+
+    return render_template('frontpage.html',
+        categories=result,
+        posts=pres)
+
 
 @app.route('/search')
 def search():
@@ -678,7 +771,7 @@ def get_locale():
 
 def create_db_tables():
     database.create_tables([Comment, User, Community, CommunityUser, Proposal, 
-                            CommentVote, PostVote, Moderator])
+                            CommentVote, PostVote, Moderator, Tag])
 
 login_manager.init_app(app)
 

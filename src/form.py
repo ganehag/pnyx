@@ -1,5 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, TextAreaField, SubmitField, HiddenField
+from wtforms import SelectField, SelectMultipleField, validators
+
 from flask_wtf.recaptcha import RecaptchaField
 
 from urllib.parse import urlparse, urljoin
@@ -18,6 +20,18 @@ def get_redirect_target():
             continue
         if is_safe_url(target):
             return target
+
+
+class Select2MultipleField(SelectMultipleField):
+    def pre_validate(self, form):
+        # Prevent "not a valid choice" error
+        pass
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = ",".join(valuelist)
+        else:
+            self.data = ""
 
 class RedirectForm(FlaskForm):
     next = HiddenField()
@@ -49,6 +63,13 @@ class RegisterForm(RedirectForm):
 
 
 class CommunityCreateForm(RedirectForm):
-    name = StringField('name')
-    description = TextAreaField('description')
+    name = StringField('name', [
+        validators.DataRequired(),
+        validators.Length(min=3, max=50)])
+    description = TextAreaField('description', [
+        validators.DataRequired()])
+    tags = Select2MultipleField("tags", [],
+            choices=[],
+            render_kw={"multiple": "multiple"})
+
     recaptcha = RecaptchaField()

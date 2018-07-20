@@ -1,0 +1,32 @@
+{% for key, reply in entry.comments(load_all).items() recursive %}
+<ul class="comment" style="position: relative;">
+    <li class="mb-4">
+        <div style="float: left; left: -8px; position: absolute; width: 16px; text-align: center; background-color: #FFF;">
+            
+            <a class="comment-vote-btn" href="{{ url_for('comment_upvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+            <a class="comment-vote-btn" href="{{ url_for('comment_downvote', slug=entry.slug, comment_id=reply.id) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+            
+        </div>
+
+        <h6 class="small text-muted">
+            <a href="{{ url_for('user_page', user=reply.username) }}">{{ reply.username }}</a> | 
+            <span class="timeago">{{ reply.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</span> |
+            {% trans %}Points{% endtrans %}: <span class="comment-score">{{ reply.score }}</span>
+        </h6>
+        <div class="card-text">
+            {{ reply.content }}
+        </div>
+        <div class="comment-area"></div>
+        <div class="comment-toolbar small">
+            <button type="button" data-id="{{ reply.id }}" class="btn btn-xs btn-link btn-reply text-muted"><i class="fas fa-comment-alt"></i> {% trans %}Reply{% endtrans %}</button>
+            <button type="button" class="btn btn-xs btn-link btn-share text-muted">{% trans %}Share{% endtrans %}</button>
+            <button type="button" class="btn btn-xs btn-link btn-report text-muted">{% trans %}Report{% endtrans %}</button>
+        </div>
+    </li>
+    {%- if reply.comments %}
+    {{ loop(reply.comments.items()) }}
+    {%- endif %}
+</ul>
+{% else %}
+<div class="card-text">{% trans %}No comments, so far.{% endtrans %}</div>
+{% endfor %}

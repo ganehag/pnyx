@@ -63,7 +63,7 @@
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
-              <option value="c/new" selected="selected">c/new</option>
+              <option value="" selected="selected">{% trans %}Frontpage{% endtrans %}</option>
             {% endif %}
           </select>
         </form>
@@ -92,17 +92,17 @@
       <div class="col-2 col-lg-4 col-xl-4">
         <button class="btn btn-outline-light toggle-button d-lg-none" type="button"><img src="{{ url_for('static', filename='images/hamburger-menu-icon.svg') }}" height="25" alt="Menu"></button>
 
-        <a class="navbar-brand d-none d-lg-block float-left" style="font-size: 1rem" href="{{ url_for('index') }}">
+        <a class="navbar-brand d-none d-lg-block float-left" style="font-size: 1rem" href="{{ url_for('frontpage') }}">
           <img src="{{ url_for('static', filename='images/pnyx-with-text.svg') }}" height="25" alt="">
         </a>
         
         <!-- select community -->
-        <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 300px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
+        <form id="nav-communityslist" action="#" method="get" class="form-inline mr-3 d-none d-lg-flex" style="max-width: 240px;" {% if community %}data-id="{{ community.id }}"{% endif %}>
           <select class="form-control nav-communitylist-select w-100" name="nav-communitylist-select" placeholder="{% trans %}Select a Community...{% endtrans %}">
             {% if community %}
               <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
             {% else %}
-              <option value="c/new" selected="selected">c/new</option>
+              <option value="" selected="selected">{% trans %}Frontpage{% endtrans %}</option>
             {% endif %}
           </select>
         </form>
@@ -230,6 +230,13 @@
             });
         }
 
+        function momentify() {
+          $('.timeago').each(function() {
+            $(this).attr('data-timestamp', $(this).text());
+            $(this).text(moment($(this).text()).fromNow());
+          });
+        }
+
         $(document).ready(function() {
           $('a.is-login').click(function(e) {
             e.preventDefault();
@@ -260,10 +267,7 @@
               }
           });
 
-          $('.timeago').each(function() {
-            $(this).attr('data-timestamp', $(this).text());
-            $(this).text(moment($(this).text()).fromNow());
-          });
+          momentify();
 
           {% if current_user.is_authenticated %}
             $(".porte-monnaie").on("amount", function(event) {

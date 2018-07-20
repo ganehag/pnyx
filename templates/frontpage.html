@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block meta_description %}
+{% trans %}Pnyx: A voice for democracy{% endtrans %}
+{% endblock %}
+
+{% block title %}
+{% trans %}Frontpage{% endtrans %}
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block page_header %}
+<div class="container">
+  <h3 class="pt-3 pb-3 my-2">
+    <span class="semi-transparent">    
+      <span class="text-primary">{% trans %}Frontpage{% endtrans %}</span>
+    </span>
+  </h3>
+</div>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <h6 class="mr-3 float-right">{% trans %}Posts{% endtrans %}</h6>
+      <h6 class="ml-3">{% trans %}Category{% endtrans %}</h6>
+
+      {% for cat in categories %}
+      <div class="card mb-3">
+        <div class="card-body">
+          <div class="float-right">{{ cat.total_post_count }}</div>
+          <h5>#{{ cat.title }}</h5>
+          
+          {% for item in cat.communities %}
+          <div class="d-inline-block">
+            <span class="d-inline-block" style="width: 12px; height: 12px; background: {{ item.color }};"></span>
+            <span class="mr-2"><a href="{{ url_for('community', community=item.community_name) }}">{{ item.community_name }}</a></span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="col-md-6">
+      <h6 class="ml-3">{% trans %}Latest{% endtrans %}</h6>
+      <div class="card mb-3">
+        <ul class="list-group list-group-flush w-100">
+          {% for entry in posts %}
+          <li class="list-group-item"> 
+          <h6><a href="{{ url_for('detail', community=entry.community_name, slug=entry.slug)}}">{{ entry.title }}</a></h6>
+          <div class="d-inline-block">
+            <span class="d-inline-block" style="width: 12px; height: 12px; background: {{ entry.color }};"></span>
+            <span class="mr-2"><a href="{{ url_for('community', community=entry.community_name) }}">{{ entry.community_name }}</a></span>
+          </div>
+          <span class="timeago float-right small">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      {% include "side_footer.html" %}
+    </div>
+  </div>  
+</div>
+{% endblock %}
+
