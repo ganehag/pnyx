@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2018-07-10 18:43+0200\n"
-"PO-Revision-Date: 2018-07-10 18:47+0200\n"
+"POT-Creation-Date: 2018-07-20 11:11+0200\n"
+"PO-Revision-Date: 2018-07-20 11:16+0200\n"
 "Last-Translator: Mikael Ganehag Brorsson <mikael.brorsson@gmail.com>\n"
 "Language: sv\n"
 "Language-Team: sv <LL@li.org>\n"
@@ -19,100 +19,176 @@ msgstr ""
 "Generated-By: Babel 2.6.0\n"
 "X-Generator: Poedit 1.8.11\n"
 
-#: src/main.py:642 templates/base.html:86 templates/base.html:167
-msgid "My Profile"
-msgstr "Min profil"
+#: src/main.py:301
+msgid "This name is already in use."
+msgstr "Detta namn används redan."
 
-#: src/main.py:666
+#: src/main.py:317
+msgid "Unable to add tags."
+msgstr "Oförmögen att lägga till taggar"
+
+#: src/main.py:781
 msgid "Database tables created"
 msgstr "Databas tabeller skapade"
 
-#: templates/base.html:65 templates/base.html:156
+#: templates/base.html:53 templates/base.html:144
+#: templates/community_create.html:25 templates/community_create.html:26
+#: templates/community_create.html:34 templates/community_create.html:35
 msgid "karma"
 msgstr "karma"
 
-#: templates/base.html:74 templates/base.html:113
+#: templates/base.html:62 templates/base.html:101
 msgid "Select a Community..."
 msgstr "Välj en gemenskap..."
 
-#: templates/base.html:87 templates/base.html:168 templates/detail.html:132
-#: templates/detail.html:134 templates/index.html:62 templates/index.html:64
+#: templates/base.html:66 templates/base.html:105 templates/frontpage.html:8
+#: templates/frontpage.html:18
+msgid "Frontpage"
+msgstr "Framsidan"
+
+#: templates/base.html:74 templates/base.html:155
+msgid "My Profile"
+msgstr "Min profil"
+
+#: templates/base.html:75 templates/base.html:156 templates/detail.html:121
+#: templates/detail.html:123 templates/index.html:70 templates/index.html:72
 msgid "Create Post"
 msgstr "Skapa inlägg"
 
-#: templates/base.html:89 templates/base.html:137 templates/base.html:172
+#: templates/base.html:77 templates/base.html:125 templates/base.html:160
 msgid "Sign In"
 msgstr "Logga in"
 
-#: templates/base.html:94 templates/base.html:170
+#: templates/base.html:82 templates/base.html:158
 msgid "Sign Out"
 msgstr "Logga ut"
 
-#: templates/base.html:125 templates/search.html:4
+#: templates/base.html:113 templates/search.html:4
 msgid "Search"
 msgstr "Sök"
 
-#: templates/base.html:138
+#: templates/base.html:126
 msgid "Sign Up"
 msgstr "Bli Medlem"
 
-#: templates/detail.html:31
+#: templates/community_create.html:20
+msgid "Create a new Community"
+msgstr "Skapa en ny gemenskap"
+
+#: templates/community_create.html:25
+msgid "You do not have enough karma to creating a new community. It will cost you"
+msgstr ""
+"Du har inte tillräckligt med karma för att skapa en ny gemenskap. Detta kräver:"
+
+#: templates/community_create.html:26 templates/community_create.html:35
+msgid "You currently have"
+msgstr "Du har just nu"
+
+#: templates/community_create.html:29
+msgid "Return"
+msgstr "Återvänd"
+
+#: templates/community_create.html:34
+msgid "Creating a new community will cost you"
+msgstr "Att skapa en ny gemenskap kommer att kosta dig"
+
+#: templates/community_create.html:43
+msgid "Close"
+msgstr "Stäng"
+
+#: templates/community_create.html:55 templates/community_create.html:56
+msgid "Name"
+msgstr "Namn"
+
+#: templates/community_create.html:57
+msgid "Resulting URL"
+msgstr "Resulterande URL"
+
+#: templates/community_create.html:61
+msgid "Description"
+msgstr "Beskrivning"
+
+#: templates/community_create.html:62
+msgid "Describe the new community"
+msgstr "Beskriv den nya gemenskapen"
+
+#: templates/community_create.html:66
+msgid "Tags (optional)"
+msgstr "Taggar (frivillig)"
+
+#: templates/community_create.html:67
+msgid "Tags"
+msgstr "Tagg"
+
+#: templates/community_create.html:82
+msgid "Create"
+msgstr "Skapa"
+
+#: templates/detail.html:34
+msgid "Edit"
+msgstr "Redigera"
+
+#: templates/detail.html:39 templates/includes/post-object-list.html:72
 msgid "Posted by"
 msgstr "Postat av"
 
-#: templates/detail.html:52 templates/detail.html:67
+#: templates/detail.html:42 templates/includes/post-object-list.html:75
+msgid "Modified"
+msgstr "Ändrad"
+
+#: templates/detail.html:63 templates/detail.html:78
 msgid "Comment"
 msgstr "Kommentera"
 
-#: templates/detail.html:83
-msgid "Points"
-msgstr "Poäng"
+#: templates/detail.html:86
+msgid "more replies"
+msgstr "fler svar"
 
-#: templates/detail.html:90
-msgid "Reply"
-msgstr "Svara"
-
-#: templates/detail.html:91
-msgid "Share"
-msgstr "Dela"
-
-#: templates/detail.html:92
-msgid "Report"
-msgstr "Rapportera"
-
-#: templates/detail.html:100
-msgid "No comments, so far."
-msgstr "Inga kommentarer, hittills."
-
-#: templates/detail.html:109 templates/index.html:36
+#: templates/detail.html:98 templates/index.html:44
 msgid "Community Details"
 msgstr "Gemenskapsuppgifter"
 
-#: templates/detail.html:130 templates/index.html:60
+#: templates/detail.html:119 templates/index.html:68
 msgid "Subscribe"
 msgstr "Prenumerera"
 
-#: templates/detail.html:142 templates/index.html:72
+#: templates/detail.html:131 templates/index.html:80
 msgid "Community Rules"
 msgstr "Gemenskapsregler"
 
-#: templates/index.html:46
+#: templates/frontpage.html:4
+msgid "Pnyx: A voice for democracy"
+msgstr "Pnyx: En röst för demokrati"
+
+#: templates/frontpage.html:30
+msgid "Posts"
+msgstr "Inlägg"
+
+#: templates/frontpage.html:31
+msgid "Category"
+msgstr "Kategori"
+
+#: templates/frontpage.html:50
+msgid "Latest"
+msgstr "Senaste"
+
+#: templates/index.html:54
 msgid "Subscribers"
 msgstr "Abonnenter"
 
-#: templates/index.html:53
+#: templates/index.html:61
 msgid ""
-"The newest posts from all of Pnyx. Come here to see posts rising and be a "
-"part of the conversation."
+"The newest posts from all of Pnyx. Come here to see posts rising and be a part "
+"of the conversation."
 msgstr ""
-"De senaste inläggen från alla grupper på Pnyx. Kom hit för att se inlägg "
-"stiga och vara en del av samtalet."
+"De senaste inläggen från alla grupper på Pnyx. Kom hit för att se inlägg stiga "
+"och vara en del av samtalet."
 
-#: templates/search.html:10
+#: templates/search.html:11
 msgid "Search results for"
 msgstr "Sökresultat för"
 
-#: templates/search.html:22
+#: templates/search.html:24
 msgid "Communities"
 msgstr "Gemenskaper"
 
@@ -136,26 +212,62 @@ msgstr "Red. policy"
 msgid "Powered by Pnyx"
 msgstr "Drivs av Pnyx"
 
-#: templates/user.html:37
+#: templates/submit.html:3
+msgid "Create entry"
+msgstr "Skapa inlägg"
+
+#: templates/submit.html:19
+msgid "Edit Post"
+msgstr "Redigera inlägg"
+
+#: templates/submit.html:21
+msgid "Create a Post"
+msgstr "Skapa ett inlägg"
+
+#: templates/submit.html:77
+msgid "Publish"
+msgstr "Publisera"
+
+#: templates/user.html:39
 msgid "Karma"
 msgstr "Karma"
 
-#: templates/user.html:41
+#: templates/user.html:43
 msgid "Cake day"
 msgstr "Tårtdag"
 
-#: templates/user.html:48
+#: templates/user.html:50
 msgid "New Post"
 msgstr "Nytt inlägg"
 
-#: templates/user.html:63
+#: templates/user.html:65
 msgid "No subscriptions..."
 msgstr "Inga prenumerationer..."
 
-#: templates/user.html:76
+#: templates/user.html:78
 msgid "You don't maintain any communities"
 msgstr "Du ansvarar inte för några gemenskaper"
 
-#: templates/user.html:80
+#: templates/user.html:82
 msgid "Create a Community"
 msgstr "Skapa en gemenskap"
+
+#: templates/includes/comments.html:14
+msgid "Points"
+msgstr "Poäng"
+
+#: templates/includes/comments.html:21
+msgid "Reply"
+msgstr "Svara"
+
+#: templates/includes/comments.html:22
+msgid "Share"
+msgstr "Dela"
+
+#: templates/includes/comments.html:23
+msgid "Report"
+msgstr "Rapportera"
+
+#: templates/includes/comments.html:31
+msgid "No comments, so far."
+msgstr "Inga kommentarer, hittills."
