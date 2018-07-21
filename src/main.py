@@ -211,12 +211,9 @@ def post_edit(slug):
 
     if request.method == 'POST':
         with database.atomic():
-
             entry.modified = datetime.datetime.now()
             entry.content = request.form.get('content') or ''
             entry.save()
-
-            print(entry.modified)
 
         return redirect(
             url_for('detail', slug=entry.slug, community=entry.community.name))
