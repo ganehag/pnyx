@@ -39,7 +39,7 @@ from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser,
-                    Proposal, CommentVote, PostVote, Moderator, Tag, db)
+                    Proposal, CommentVote, PostVote, Moderator, Tag, PostHistory, db)
 
 from slugify import slugify
 
@@ -211,8 +211,16 @@ def post_edit(slug):
 
     if request.method == 'POST':
         with database.atomic():
+            new_content = request.form.get('content') or ''
+
+            if new_content != entry.content:
+                ph = PostHistory()
+                ph.post = entry
+                ph.content = entry.content
+                ph.save()
+
             entry.modified = datetime.datetime.now()
-            entry.content = request.form.get('content') or ''
+            entry.content = new_content
             entry.save()
 
         return redirect(
@@ -263,7 +271,6 @@ def community_subscribe(community):
 #
 # Community
 #
-
 @app.route('/c/<community>')
 @cache.cached(timeout=50)
 def community(community):
@@ -822,7 +829,8 @@ def get_locale():
 
 def create_db_tables():
     database.create_tables([Comment, User, Community, CommunityUser, Proposal,
-                            CommentVote, PostVote, Moderator, Tag])
+                            CommentVote, PostVote, Moderator, Tag, PostHistory
+                            ])
 
 
 login_manager.init_app(app)

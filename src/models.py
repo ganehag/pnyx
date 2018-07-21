@@ -29,8 +29,14 @@ import peewee
 db = FlaskDB()
 
 
-# forward declaration
+#
+# Forward declarations
+#
 class Comment(db.Model):
+    pass
+
+
+class Proposal(db.Model):
     pass
 
 
@@ -243,6 +249,17 @@ class CommunityUser(db.Model):
         indexes = (
             (("community_id", "user_id"), True),
         )
+
+
+class PostHistory(db.Model):
+    post = ForeignKeyField(Proposal)
+    timestamp = DateTimeField(default=datetime.datetime.now)
+    content = TextField()
+
+    @hybrid_property
+    def rev(self):
+        return fn.row_number().over(
+            order_by=[PostHistory.timestamp]).alias('revision')
 
 
 class Proposal(db.Model):
@@ -480,6 +497,13 @@ class Proposal(db.Model):
     def LOAD_LIMIT(self):
         return 50
 
+    @property
+    def history(self):
+        return PostHistory.select(PostHistory.timestamp,
+                                  PostHistory.content,
+                                  PostHistory.rev
+                                  ).where(PostHistory.post == self)
+
 
 class Comment(db.Model):
     post = ForeignKeyField(Proposal)
@@ -555,12 +579,3 @@ class Tag(db.Model):
                 .order_by(Tag.title, Community.name)
                 .objects())
 
-
-class PostHistory(db.Model):
-    post = ForeignKeyField(Proposal)
-    timestamp = DateTimeField(default=datetime.datetime.now)
-    content = TextField()
-
-    @hybrid_property
-    def revision(self):
-        pass
