@@ -33,6 +33,7 @@ db = FlaskDB()
 class Comment(db.Model):
     pass
 
+
 class AnonymousUser():
     username = "Anonymous"
     password = ""
@@ -61,9 +62,10 @@ class AnonymousUser():
     @property
     def locale(self):
         return None
-    
+
     def get_id(self):
         return 0
+
 
 class User(db.Model):
     email = CharField(unique=True)
@@ -87,7 +89,7 @@ class User(db.Model):
     @property
     def is_active(self):
         return self._is_active
-    
+
     @property
     def is_anonymous(self):
         return self._is_anonymous
@@ -113,41 +115,50 @@ class User(db.Model):
             Community.id,
             Community.name,
             Community.description
-        ).join(CommunityUser).where(CommunityUser.user_id == self.id).order_by(Community.name)
-    
+        ).join(CommunityUser).where(CommunityUser.user_id == self.id).order_by(
+            Community.name)
+
     @property
     def newest_posts(self):
         return self.posts.order_by(Proposal.timestamp.desc()).limit(10)
-    
 
     def has_upvoted(self, item):
         if isinstance(item, Proposal):
             return PostVote.select().where(
-                (PostVote.post == item) & (PostVote.user == self) & (PostVote.vote > 0)
+                (PostVote.post == item) &
+                (PostVote.user == self) &
+                (PostVote.vote > 0)
             ).count() > 0
 
         elif isinstance(item, Comment):
             return CommentVote.select(CommentVote.id).where(
-                (CommentVote.comment == item) & (CommentVote.user == self) & (CommentVote.vote > 0)
+                (CommentVote.comment == item) &
+                (CommentVote.user == self) &
+                (CommentVote.vote > 0)
             ).count() > 0
-        
+
         return None
 
     def has_downvoted(self, item):
         if isinstance(item, Proposal):
             return PostVote.select().where(
-                (PostVote.post == item) & (PostVote.user == self) & (PostVote.vote < 0)
+                (PostVote.post == item) &
+                (PostVote.user == self) &
+                (PostVote.vote < 0)
             ).count() > 0
 
         elif isinstance(item, Comment):
             return CommentVote.select().where(
-                (CommentVote.comment == item) & (CommentVote.user == self) & (CommentVote.vote < 0)
+                (CommentVote.comment == item) &
+                (CommentVote.user == self) &
+                (CommentVote.vote < 0)
             ).count() > 0
-        
+
         return None
 
     def get_id(self):
         return self.id
+
 
 class Community(db.Model):
     name = CharField(unique=True)
@@ -173,7 +184,8 @@ class Community(db.Model):
 
     @property
     def user_count(self):
-        num = CommunityUser.select().where(CommunityUser.community == self).count()
+        num = CommunityUser.select().where(
+            CommunityUser.community == self).count()
         magnitude = 0
         while abs(num) >= 1000:
             magnitude += 1
@@ -191,7 +203,8 @@ class Community(db.Model):
     @property
     def current_user_subscribed(self):
         return CommunityUser.get_or_none(
-            CommunityUser.user_id == current_user.id, CommunityUser.community_id == self.id
+            CommunityUser.user_id == current_user.id,
+            CommunityUser.community_id == self.id
         ) is not None
 
     @classmethod
@@ -199,7 +212,9 @@ class Community(db.Model):
         return Community.select(
             Community,
             fn.COUNT(CommunityUser.community_id).alias('sub_count')
-        ).join(CommunityUser, JOIN.LEFT_OUTER).where(Community.search_content.match(query.replace(' ', '|'))).group_by(Community).order_by(SQL('sub_count'))
+        ).join(CommunityUser, JOIN.LEFT_OUTER).where(
+            Community.search_content.match(query.replace(' ', '|'))
+        ).group_by(Community).order_by(SQL('sub_count'))
 
     @classmethod
     def rgbcolor(cls, name):
@@ -219,14 +234,16 @@ class Community(db.Model):
                 r[k] = json.dumps(getattr(self, k))
         return str(r)
 
+
 class CommunityUser(db.Model):
     community = ForeignKeyField(Community, backref='subscribers')
     user = ForeignKeyField(User)
-    
+
     class Meta:
         indexes = (
             (("community_id", "user_id"), True),
         )
+
 
 class Proposal(db.Model):
     community = ForeignKeyField(Community, backref='posts')
@@ -321,8 +338,11 @@ class Proposal(db.Model):
     def rank(self):
         try:
             return ((self.upvotes + 1.9208) / (self.upvotes + self.downvotes) -
-                   1.96 * math.sqrt((self.upvotes * self.downvotes) / (self.upvotes + self.downvotes) + 0.9604) /
-                          (self.upvotes + self.downvotes)) / (1 + 3.8416 / (self.upvotes + self.downvotes))
+                    1.96 * math.sqrt(
+                        (self.upvotes * self.downvotes)
+                        / (self.upvotes + self.downvotes)
+                        + 0.9604) / (self.upvotes + self.downvotes)
+                    ) / (1 + 3.8416 / (self.upvotes + self.downvotes))
         except ZeroDivisionError:
             return 0
 
@@ -335,17 +355,21 @@ class Proposal(db.Model):
             return self.upvotes
 
         return ((upvotes + 1.9208) / (upvotes + downvotes) -
-               1.96 * fn.SQRT((upvotes * downvotes) / (upvotes + downvotes) + 0.9604) /
-                      (upvotes + downvotes)) / (1 + 3.8416 / (upvotes + downvotes))
+                1.96 * fn.SQRT((upvotes * downvotes)
+                / (upvotes + downvotes) + 0.9604) /
+                (upvotes + downvotes)) / (1 + 3.8416 / (upvotes + downvotes))
 
     @classmethod
     def search(cls, query):
-        match_filter = Expression(Proposal.search_content, TS_MATCH, fn.plainto_tsquery(query))
-        return Proposal.select().where((Proposal.published == True) & match_filter)
+        match_filter = Expression(
+            Proposal.search_content, TS_MATCH, fn.plainto_tsquery(query))
+        return Proposal.select().where(
+            (Proposal.published == True) & match_filter)
 
     @classmethod
     def from_community(cls, community):
-        return Proposal.select().where(Proposal.published == True, Proposal.community == community)
+        return Proposal.select().where(
+            Proposal.published == True, Proposal.community == community)
 
     @classmethod
     def public(cls):
@@ -373,53 +397,58 @@ class Proposal(db.Model):
                     'comments': collections.OrderedDict()
                 }
             else:
-                resolve_comment(os.path.dirname(path), base[int(os.path.basename(path))]['comments'])
+                resolve_comment(os.path.dirname(path),
+                                base[int(os.path.basename(path))]['comments'])
 
         def recursive_sort_dict(items, limit=None):
-            items = collections.OrderedDict(sorted(items.items(), reverse=True, key=lambda x: (x[1]['score'], x[1]['timestamp'])))
+            items = collections.OrderedDict(
+                sorted(items.items(),
+                       reverse=True,
+                       key=lambda x: (x[1]['score'], x[1]['timestamp'])))
+
             for key, item in items.items():
-                if item['comments']:
-                    if limit is None or limit > 0:
-                        limit, item['comments'] = recursive_sort_dict(item['comments'], limit)
+                if item['comments'] and (limit is None or limit > 0):
+                    # if limit is None or limit > 0:
+                    limit, item['comments'] = recursive_sort_dict(
+                        item['comments'], limit)
 
             if limit is not None:
                 if limit - len(items) <= 0:
-                    return -1, collections.OrderedDict(islice(items.items(), self.LOAD_LIMIT))
+                    return -1, collections.OrderedDict(
+                        islice(items.items(), self.LOAD_LIMIT))
                 limit -= len(items)
             return limit, items
-
 
         Base = Comment.alias()
         level = Value(1).alias('level')
         path = Base.id.cast('text').alias('path')
 
-        base_case = (Base
-             # .select(Base.id, Base.post, Base.user, Base.root, Base.timestamp, Base.score, Base.content, level, path)
-             .select(Base.id, Base.post, Base.root, level, path)
-             .where((Base.root.is_null()) & (Base.post == self))
-             .cte('base', recursive=True))
+        base_case = (Base.select(
+                Base.id, Base.post, Base.root, level, path
+            ).where(
+                (Base.root.is_null()) & (Base.post == self)
+            ).cte('base', recursive=True))
 
         RTerm = Comment.alias()
         rlevel = (base_case.c.level + 1).alias('level')
         rpath = base_case.c.path.concat('/').concat(RTerm.id).alias('path')
 
-        recursive = (RTerm
-             # .select(RTerm.id, RTerm.post, RTerm.user, RTerm.root, RTerm.timestamp, RTerm.score, RTerm.content, rlevel, rpath)
-             .select(RTerm.id, RTerm.post, RTerm.root, rlevel, rpath)
-             .where(RTerm.post_id == self.id)
+        recursive = (RTerm.select(
+                RTerm.id, RTerm.post, RTerm.root, rlevel, rpath
+            ).where(RTerm.post_id == self.id)
              .join(base_case, on=(RTerm.root == base_case.c.id)))
 
         cte = base_case.union_all(recursive)
 
-        query = (cte
-              # .select_from(cte.c.id, cte.c.user_id, User.username, cte.c.timestamp, cte.c.score, cte.c.content, cte.c.level, cte.c.path)
-              .select_from(cte.c.id, cte.c.level, cte.c.path)
-              # .join(User, on=(User.id == cte.c.user_id))
-              .where(cte.c.post_id == self.id)
-              # .order_by(cte.c.path, cte.c.timestamp))
-              .order_by(cte.c.path))
+        query = (cte.select_from(
+                cte.c.id, cte.c.level, cte.c.path
+            ).where(cte.c.post_id == self.id)
+             .order_by(cte.c.path))
 
-        c_query = Comment.select(Comment.id, Comment.user_id, Comment.score, Comment.timestamp, Comment.content, User.username).join(User).where(Comment.post == self).order_by(Comment.id)
+        c_query = Comment.select(
+                Comment.id, Comment.user_id, Comment.score,
+                Comment.timestamp, Comment.content, User.username
+            ).join(User).where(Comment.post == self).order_by(Comment.id)
         cursor = db.database.execute(c_query)
         comment_dict = {id: {
             'id': id,
@@ -429,14 +458,15 @@ class Proposal(db.Model):
             'score': score,
             'content': content
         } for id, user_id, score, ts, content, username in cursor}
-     
+
         comment_dict_res = collections.OrderedDict()
         for item in query:
             rpath = "/".join(item.path.split('/')[::-1])
             resolve_comment(rpath, comment_dict_res)
 
         if not show_all:
-            _, sorted_dict = recursive_sort_dict(comment_dict_res, self.LOAD_LIMIT)
+            _, sorted_dict = recursive_sort_dict(
+                comment_dict_res, self.LOAD_LIMIT)
         else:
             _, sorted_dict = recursive_sort_dict(comment_dict_res)
 
@@ -471,6 +501,7 @@ class CommentVote(db.Model):
             (('comment', 'user'), True),
         )
 
+
 class PostVote(db.Model):
     post = ForeignKeyField(Proposal)
     user = ForeignKeyField(User)
@@ -482,6 +513,7 @@ class PostVote(db.Model):
             (('post', 'user'), True),
         )
 
+
 class Moderator(db.Model):
     user = ForeignKeyField(User)
     community = ForeignKeyField(Community)
@@ -490,6 +522,7 @@ class Moderator(db.Model):
         indexes = (
             (('user', 'community'), True),
         )
+
 
 class Tag(db.Model):
     title = CharField()
@@ -506,9 +539,7 @@ class Tag(db.Model):
                     Tag.title,
                     fn.COUNT(Tag.id))
                 .group_by(Tag.title)
-                .order_by(-fn.COUNT(Tag.id))
-
-        )
+                .order_by(-fn.COUNT(Tag.id)))
 
     @classmethod
     def communities(cls):
@@ -518,9 +549,18 @@ class Tag(db.Model):
                         fn.COUNT(Proposal.id).alias('post_count')
                 )
                 .join(Community)
-                .join(Proposal) # , JOIN.LEFT_OUTER
-                
+                .join(Proposal)
+
                 .group_by(Tag.title, Community.name)
                 .order_by(Tag.title, Community.name)
-                .objects()
-        )
+                .objects())
+
+
+class PostHistory(db.Model):
+    post = ForeignKeyField(Proposal)
+    timestamp = DateTimeField(default=datetime.datetime.now)
+    content = TextField()
+
+    @hybrid_property
+    def revision(self):
+        pass

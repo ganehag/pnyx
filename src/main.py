@@ -30,21 +30,23 @@ from flask_caching import Cache
 from flask_compress import Compress
 
 
-from form import LoginForm, RegisterForm, CommunityCreateForm, Select2MultipleField
+from form import (LoginForm, RegisterForm, CommunityCreateForm,
+                  Select2MultipleField)
 
 import peewee
 
 from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
-from models import (Comment, AnonymousUser, User, Community, CommunityUser, 
-    Proposal, CommentVote, PostVote, Moderator, Tag, db)
+from models import (Comment, AnonymousUser, User, Community, CommunityUser,
+                    Proposal, CommentVote, PostVote, Moderator, Tag, db)
 
 from slugify import slugify
 
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
 #
+
 
 def create_app(config_file='config.yaml'):
     config = {}
@@ -65,38 +67,39 @@ def create_app(config_file='config.yaml'):
         except Exception as e:
             print("No configuration", e)
 
-    app = Flask(__name__, template_folder='../templates', static_folder='../static')
+    app = Flask(__name__, template_folder='../templates',
+                static_folder='../static')
     app.config.from_mapping(config.get(config.get('instance')))
 
-    logging.config.dictConfig(config.get(config.get('instance')).get('logging', {}))
+    logging.config.dictConfig(
+        config.get(config.get('instance')).get('logging', {}))
 
     if 'BABEL_TRANSLATION_DIRECTORIES' not in app.config.keys():
-        app.config['BABEL_TRANSLATION_DIRECTORIES'] = 'translations;../translations'
+        app.config['BABEL_TRANSLATION_DIRECTORIES'] = \
+            'translations;../translations'
 
     return app
 
 
 app = create_app("config.yaml")
-
 babel = Babel(app)
-
 cache = Cache(app)
-
 Compress(app)
-
 login_manager = LoginManager()
 login_manager.login_view = "login"
-
 assets = Environment(app)
-# assets.auto_build = False
-css = Bundle('css/bootstrap_pnyx.min.css', 'css/select2-bootstrap4.min.css', 'css/pnyx.css',
-            # filters='cssmin',
-            output='gen/screen.css')
+
+css = Bundle('css/bootstrap_pnyx.min.css',
+             'css/select2-bootstrap4.min.css',
+             'css/pnyx.css',
+             # filters='cssmin',
+             output='gen/screen.css')
 assets.register('css_all', css)
 
 db.init_app(app)
 database = db.database
 app.database = database
+
 
 @app.route('/submit_comment', methods=['POST'])
 @login_required
@@ -115,9 +118,13 @@ def submit_comment():
     else:
         comment.post = Proposal.get(Proposal.slug == slug)
 
-        if root is not None and not (Comment.get(Comment.id == root).post == comment.post):
+        if root is not None and not (
+                Comment.get(Comment.id == root).post == comment.post):
             flash('Invalid comment reference')
-            return redirect(url_for('detail', slug=slug, community=comment.post.community.name))
+            return redirect(
+                url_for('detail',
+                        slug=slug,
+                        community=comment.post.community.name))
         else:
             comment.content = content
             comment.user = user
@@ -131,10 +138,13 @@ def submit_comment():
                 flash('Unable to save comment', 'error')
 
             else:
-                return redirect(url_for('detail', slug=slug, community=comment.post.community.name))
-                
+                return redirect(
+                    url_for('detail',
+                            slug=slug,
+                            community=comment.post.community.name))
 
-    return redirect(url_for('detail', slug=slug, community=comment.post.community))
+    return redirect(
+        url_for('detail', slug=slug, community=comment.post.community))
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -154,7 +164,7 @@ def submit(user=None, community=None):
         try:
             entry.title = request.form.get('title') or ''
             entry.content = request.form.get('content') or ''
-            entry.published = request.form.get('published') or True  # default to published
+            entry.published = request.form.get('published') or True
             entry.author = User.get(User.id == current_user.id)
             entry.community = Community.get(Community.name == community)
 
@@ -176,13 +186,16 @@ def submit(user=None, community=None):
                 else:
 
                     if entry.published:
-                        return redirect(url_for('detail', community=entry.community.name, slug=entry.slug))
+                        return redirect(
+                            url_for('detail',
+                                    community=entry.community.name,
+                                    slug=entry.slug))
                     else:
                         abort(404)
 
         except peewee.DoesNotExist:
             flash('Community and Title are required.', 'error')
-        
+
     if community is not None:
         community = Community.get_or_none(Community.name == community)
 
@@ -205,9 +218,11 @@ def post_edit(slug):
 
             print(entry.modified)
 
-        return redirect(url_for('detail', slug=entry.slug, community=entry.community.name))
-    
-    return render_template('submit.html', entry=entry, community=entry.community)
+        return redirect(
+            url_for('detail', slug=entry.slug, community=entry.community.name))
+
+    return render_template('submit.html',
+                           entry=entry, community=entry.community)
 
 
 @app.route('/u/<user>', methods=["GET", "POST"])
@@ -221,15 +236,18 @@ def user_page(user):
         user=u,
         check_bounds=False)
 
+
 @app.route('/u/<user>/karma', methods=['GET'])
 def user_karma(user):
     u = get_object_or_404(User, User.username == user)
     return str(u.karma_count), 200
 
+
 @app.route('/u/subscribe/<community>', methods=['GET'])
 @login_required
 def community_subscribe(community):
-    fu = CommunityUser(community=Community.get(Community.name == community), user=User.get(User.id == current_user.id))
+    fu = CommunityUser(community=Community.get(Community.name == community),
+                       user=User.get(User.id == current_user.id))
 
     try:
         with database.atomic():
@@ -254,22 +272,27 @@ def community_subscribe(community):
 def community(community):
     community_ref = Community.get_or_none(Community.name == community)
     return object_list('index.html',
-        Proposal.from_community(community_ref).order_by(Proposal.timestamp.desc()),
-        community=community_ref,
-        check_bounds=False)
+                       Proposal.from_community(community_ref).order_by(
+                          Proposal.timestamp.desc()),
+                       community=community_ref,
+                       check_bounds=False)
+
 
 @app.route('/c/<community>/<slug>')
 @cache.cached(timeout=50)
 def detail(community, slug):
     query = Proposal.public()
     community_id = Community.get_or_none(Community.name == community)
-    entry = get_object_or_404(query, Proposal.slug == slug, Proposal.community == community_id)
+    entry = get_object_or_404(query, Proposal.slug == slug,
+                              Proposal.community == community_id)
     return render_template('detail.html', entry=entry, community=community_id)
+
 
 @app.route('/community/slug_gen', methods=['GET'])
 @login_required
 def community_slug_generate():
     return jsonify({"slug": slugify(request.args.get('t', ''))})
+
 
 @app.route('/community/create', methods=['GET', 'POST'])
 @login_required
@@ -277,7 +300,10 @@ def community_slug_generate():
 def community_create():
     form = CommunityCreateForm()
 
-    form.tags.choices = [(t.title, t.title) for t in Tag.select(Tag.title).order_by(Tag.title).distinct()]
+    form.tags.choices = [
+        (t.title, t.title) for t in Tag.select(Tag.title).order_by(
+            Tag.title).distinct()
+    ]
 
     if form.validate_on_submit() and current_user.karma >= 50:
         community = Community()
@@ -321,6 +347,7 @@ def community_create():
             return redirect(url_for('community', community=community.name))
 
     return render_template('community_create.html', form=form)
+
 
 @app.route('/community/search', methods=['GET'])
 def community_search():
@@ -386,7 +413,9 @@ def proposal_upvote(slug):
         prop.upvotes -= 1
         # current_user.karma += 1
         prop.author.karma -= 1  # Not so sure about this...
-        rowcount = PostVote.delete().where((PostVote.post == prop) & (PostVote.user_id == current_user.id)).execute()
+        rowcount = PostVote.delete().where(
+                (PostVote.post == prop) & (PostVote.user_id == current_user.id)
+            ).execute()
         result["diff"] = '-1'
     else:
         score_mod = 1
@@ -398,21 +427,22 @@ def proposal_upvote(slug):
         # current_user.karma -= 1
         prop.author.karma += 1
 
-        rowid = (PostVote
-         .insert(post=prop, user=current_user.id, vote=1)
-         .on_conflict(
-             conflict_target=[PostVote.user,PostVote.post],
-             preserve=[PostVote.vote,PostVote.timestamp])
-         .execute())
-    
+        rowid = (PostVote.insert(
+            post=prop, user=current_user.id, vote=1
+        ).on_conflict(
+            conflict_target=[PostVote.user, PostVote.post],
+            preserve=[PostVote.vote, PostVote.timestamp]
+        ).execute())
+
     Proposal.save(prop)
     # FIXME move karma to another table
-    User.save(prop.author)  
+    User.save(prop.author)
     User.save(current_user)
 
     result["votes"] = str(prop.votes)
 
     return jsonify(result)
+
 
 @app.route('/p/downvote/<slug>', methods=['GET'])
 @login_required
@@ -429,7 +459,9 @@ def proposal_downvote(slug):
         # current_user.karma += 1
         prop.author.karma += 1
         prop.downvotes -= 1
-        rowcount = PostVote.delete().where((PostVote.post == prop) & (PostVote.user_id == current_user.id)).execute()
+        rowcount = PostVote.delete().where(
+            (PostVote.post == prop) & (PostVote.user_id == current_user.id)
+        ).execute()
         result["diff"] = '+1'
 
     else:
@@ -440,23 +472,23 @@ def proposal_downvote(slug):
             score_mod = 2
         result["diff"] = str(-score_mod)
         prop.downvotes += score_mod
-        
 
-        rowid = (PostVote
-         .insert(post=prop, user=current_user.id, vote=-1)
-         .on_conflict(
-             conflict_target=[PostVote.user,PostVote.post],
-             preserve=[PostVote.vote,PostVote.timestamp])
-         .execute())
+        rowid = (PostVote.insert(
+            post=prop, user=current_user.id, vote=-1
+        ).on_conflict(
+            conflict_target=[PostVote.user, PostVote.post],
+            preserve=[PostVote.vote, PostVote.timestamp]
+        ).execute())
 
     Proposal.save(prop)
     # FIXME move karma to another table
     User.save(current_user)
-    User.save(prop.author) 
+    User.save(prop.author)
 
     result["votes"] = str(prop.votes)
 
     return jsonify(result)
+
 
 @app.route('/p/upvote/<slug>/<comment_id>', methods=['GET'])
 @login_required
@@ -475,7 +507,8 @@ def comment_upvote(slug, comment_id):
         # current_user.karma += 1
         comment.score -= 1
         rowcount = CommentVote.delete().where(
-            (CommentVote.comment == comment) & (CommentVote.user_id == current_user.id)
+            (CommentVote.comment == comment) &
+            (CommentVote.user_id == current_user.id)
         ).execute()
         result["diff"] = '-1'
     else:
@@ -485,15 +518,15 @@ def comment_upvote(slug, comment_id):
             score_mod = 2
 
         comment.score += score_mod
-        
+
         result["diff"] = '+' + str(score_mod)
 
-        rowid = (CommentVote
-         .insert(comment=comment, user=current_user.id, vote=1)
-         .on_conflict(
-             conflict_target=[CommentVote.user,CommentVote.comment],
-             preserve=[CommentVote.vote,CommentVote.timestamp])
-         .execute())
+        rowid = (CommentVote.insert(
+            comment=comment, user=current_user.id, vote=1
+        ).on_conflict(
+            conflict_target=[CommentVote.user, CommentVote.comment],
+            preserve=[CommentVote.vote, CommentVote.timestamp]
+        ).execute())
 
     Comment.save(comment)
     # FIXME move karma to another table
@@ -502,6 +535,7 @@ def comment_upvote(slug, comment_id):
     result["score"] = str(comment.score)
 
     return jsonify(result)
+
 
 @app.route('/p/downvote/<slug>/<comment_id>', methods=['GET'])
 @login_required
@@ -520,7 +554,8 @@ def comment_downvote(slug, comment_id):
         comment.score += 1
         # current_user.karma += 1
         rowcount = CommentVote.delete().where(
-            (CommentVote.comment == comment) & (CommentVote.user_id == current_user.id)
+            (CommentVote.comment == comment) &
+            (CommentVote.user_id == current_user.id)
         ).execute()
         result["diff"] = '+1'
     else:
@@ -532,12 +567,12 @@ def comment_downvote(slug, comment_id):
         comment.score -= score_mod
         # current_user.karma -= 1
 
-        rowid = (CommentVote
-         .insert(comment=comment, user=current_user.id, vote=-1)
-         .on_conflict(
-             conflict_target=[CommentVote.user,CommentVote.comment],
-             preserve=[CommentVote.vote,CommentVote.timestamp])
-         .execute())
+        rowid = (CommentVote.insert(
+            comment=comment, user=current_user.id, vote=-1
+        ).on_conflict(
+            conflict_target=[CommentVote.user, CommentVote.comment],
+            preserve=[CommentVote.vote, CommentVote.timestamp]
+        ).execute())
 
     Comment.save(comment)
     # FIXME move karma to another table
@@ -547,6 +582,7 @@ def comment_downvote(slug, comment_id):
 
     return jsonify(result)
 
+
 #
 # Proposal load all comments
 #
@@ -555,7 +591,8 @@ def comment_downvote(slug, comment_id):
 @cache.cached(timeout=50)
 def all_comments_for_post(slug):
     entry = get_object_or_404(Proposal, Proposal.slug == slug)
-    return render_template('includes/comments.html', entry=entry, load_all=True)
+    return render_template(
+        'includes/comments.html', entry=entry, load_all=True)
 
 
 #
@@ -578,16 +615,19 @@ def login():
         shasum = hashlib.sha384(form.password.data.encode()).hexdigest()
 
         try:
-            user = User.get(User.username == form.username.data, User.password == shasum)
+            user = User.get(User.username == form.username.data,
+                            User.password == shasum)
         except peewee.DoesNotExist:
             flash("Invalid username or password", "error")
             return redirect(url_for('login'))
 
         login_user(user)
 
-        return render_template('login.html') # form.redirect('index')
+        return render_template('login.html')  # form.redirect('index')
 
-    return render_template('login.html', form=form, next=request.args.get('next'))
+    return render_template('login.html',
+                           form=form,
+                           next=request.args.get('next'))
 
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -595,6 +635,7 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -636,15 +677,21 @@ def index():
 
     if request.path == "/c/popular":
         query = query.order_by(-Proposal.ranking)
-        community = Community(name="popular", description="The most popular posts on Pnyx.")
+        community = Community(name="popular",
+                              description="The most popular posts on Pnyx.")
 
     elif request.path == "/c/upvote":
         query = query.order_by(-(Proposal.upvotes - Proposal.downvotes))
-        community = Community(name="upvote", description="The most upvoted posts on Pnyx.")
+        community = Community(name="upvote",
+                              description="The most upvoted posts on Pnyx.")
 
     elif request.path == "/c/new":
         query = query.order_by(Proposal.timestamp.desc())
-        community = Community(name="new", description="The newest posts from all of Pnyx. Come here to see posts rising and be a part of the conversation..")
+        community = Community(name="new",
+                              description=gettext(
+                                "The newest posts from all of Pnyx. Come here "
+                                "to see posts rising and be a part of "
+                                "the conversation.."))
 
     else:
         query = query.order_by(-Proposal.ranking, Proposal.timestamp.desc())
@@ -668,7 +715,7 @@ def frontpage():
         post_count = sum([x.post_count for x in grp])
 
         result.append({
-            "title": key, 
+            "title": key,
             "count": len(grp),
             "communities": grp,
             "total_post_count": post_count
@@ -677,11 +724,11 @@ def frontpage():
     result = sorted(result, key=lambda x: x['count'], reverse=True)
 
     posts = (Proposal.select(
-                    Proposal.title, 
-                    Proposal.slug,
-                    Proposal.author,
-                    Proposal.timestamp,
-                    Community.name.alias('communityname'))
+            Proposal.title,
+            Proposal.slug,
+            Proposal.author,
+            Proposal.timestamp,
+            Community.name.alias('communityname'))
         .join(Community)
         .where(Proposal.published == True)
         .order_by(Proposal.timestamp.desc())
@@ -699,8 +746,8 @@ def frontpage():
         })
 
     return render_template('frontpage.html',
-        categories=result,
-        posts=pres)
+                           categories=result,
+                           posts=pres)
 
 
 @app.route('/search')
@@ -719,11 +766,13 @@ def search():
                 search=search_query,
                 check_bounds=False)
 
-        except (peewee.InternalError, peewee.IntegrityError, peewee.ProgrammingError):
+        except (peewee.InternalError, peewee.IntegrityError,
+                peewee.ProgrammingError):
             # flash("Invalid query '{0}'".format(search_query), 'error')
             pass
 
     return render_template('search.html', search=search_query, pagination=None)
+
 
 @app.template_filter('clean_querystring')
 def clean_querystring(request_args, *keys_to_remove, **new_values):
@@ -733,12 +782,14 @@ def clean_querystring(request_args, *keys_to_remove, **new_values):
     querystring.update(new_values)
     return urlencode(querystring)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     user = User.get_or_none(User.id == int(user_id))
     if user is None:
         return AnonymousUser()
     return user
+
 
 def request_wants_json():
     best = request.accept_mimetypes \
@@ -747,12 +798,14 @@ def request_wants_json():
         request.accept_mimetypes[best] > \
         request.accept_mimetypes['text/html']
 
+
 @login_manager.unauthorized_handler
 def unauthorized():
     if request_wants_json():
         return jsonify({"error": "unauthorized", "code": 401})
     # do stuff
     return redirect(url_for('login'))
+
 
 @app.errorhandler(404)
 def not_found(exc):
@@ -769,9 +822,11 @@ def get_locale():
         return current_user.locale
     return request.accept_languages.best_match(['sv', 'es', 'de', 'fr', 'en'])
 
+
 def create_db_tables():
-    database.create_tables([Comment, User, Community, CommunityUser, Proposal, 
+    database.create_tables([Comment, User, Community, CommunityUser, Proposal,
                             CommentVote, PostVote, Moderator, Tag])
+
 
 login_manager.init_app(app)
 

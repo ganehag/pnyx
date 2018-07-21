@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, TextAreaField, SubmitField, HiddenField
+from wtforms import (StringField, PasswordField, TextAreaField, SubmitField,
+                     HiddenField)
 from wtforms import SelectField, SelectMultipleField, validators
 
 from flask_wtf.recaptcha import RecaptchaField
@@ -12,10 +13,11 @@ def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and \
-           ref_url.netloc == test_url.netloc
+        ref_url.netloc == test_url.netloc
+
 
 def get_redirect_target():
-    for target in request.args.get('next'), None: # , request.referrer
+    for target in request.args.get('next'), None:  # , request.referrer
         if not target:
             continue
         if is_safe_url(target):
@@ -32,6 +34,7 @@ class Select2MultipleField(SelectMultipleField):
             self.data = ",".join(valuelist)
         else:
             self.data = ""
+
 
 class RedirectForm(FlaskForm):
     next = HiddenField()
@@ -68,8 +71,6 @@ class CommunityCreateForm(RedirectForm):
         validators.Length(min=3, max=50)])
     description = TextAreaField('description', [
         validators.DataRequired()])
-    tags = Select2MultipleField("tags", [],
-            choices=[],
-            render_kw={"multiple": "multiple"})
-
+    tags = Select2MultipleField(
+        "tags", [], choices=[], render_kw={"multiple": "multiple"})
     recaptcha = RecaptchaField()
