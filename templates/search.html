@@ -30,7 +30,7 @@
             <li class="list-group-item"> 
               <div class="row">
                 <div class="col-4 col-md-3">
-                  <span class="font-weight-bold">{{ entry.name_with_prefix }}</span><br>
+                  <span class="font-weight-bold"><a href="{{ url_for('community', community=entry.name) }}">{{ entry.name_with_prefix }}</a></span><br>
                   <span class="small">{{ entry.user_count }} Subscribers</span>
                 </div>
                 <div class="col-8 col-md-6 mb-2">
