@@ -502,7 +502,13 @@ class Proposal(db.Model):
         return PostHistory.select(PostHistory.timestamp,
                                   PostHistory.content,
                                   PostHistory.rev
-                                  ).where(PostHistory.post == self)
+                                  ).where(
+                                    PostHistory.post == self
+                                  ).order_by(SQL('revision').desc())
+
+    @property
+    def history_skip_latest(self):
+        return self.history.offset(1)
 
 
 class Comment(db.Model):

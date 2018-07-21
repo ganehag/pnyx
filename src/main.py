@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import difflib
 import os
 import os.path
 import json
@@ -29,6 +30,7 @@ from flask_babel import Babel, gettext, ngettext
 from flask_caching import Cache
 from flask_compress import Compress
 
+from jinja2 import evalcontextfilter, Markup, escape
 
 from form import (LoginForm, RegisterForm, CommunityCreateForm,
                   Select2MultipleField)
@@ -39,9 +41,13 @@ from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
 from playhouse.shortcuts import model_to_dict, dict_to_model
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser,
-                    Proposal, CommentVote, PostVote, Moderator, Tag, PostHistory, db)
+                    Proposal, CommentVote, PostVote, Moderator, Tag,
+                    PostHistory, db)
 
 from slugify import slugify
+
+
+_paragraph_re = re.compile(r'(?:\r\n|\r|\n){2,}')
 
 #
 # http://www.evanmiller.org/how-not-to-sort-by-average-rating.html
@@ -290,6 +296,16 @@ def detail(community, slug):
     entry = get_object_or_404(query, Proposal.slug == slug,
                               Proposal.community == community_id)
     return render_template('detail.html', entry=entry, community=community_id)
+
+
+@app.route('/c/<community>/<slug>/revisions')
+def post_revisions(community, slug):
+    query = Proposal.public()
+    community = Community.get_or_none(Community.name == community)
+    entry = get_object_or_404(query, Proposal.slug == slug,
+                              Proposal.community == community)
+    return render_template('post_revisions.html',
+                           entry=entry, community=community)
 
 
 @app.route('/community/slug_gen', methods=['GET'])
@@ -816,10 +832,39 @@ def not_found(exc):
     return render_template('404.html'), 404
 
 
+@app.template_filter()
+@evalcontextfilter
+def nl2br(eval_ctx, value):
+    result = "<br>\n".join(value.splitlines())
+    if eval_ctx.autoescape:
+        result = Markup(result)
+    return result
+
+
+@app.template_filter()
+@evalcontextfilter
+def htmldiff(eval_ctx, a, b):
+    a = a.splitlines()
+    b = b.splitlines()
+
+    diff_html = ""
+    theDiffs = difflib.ndiff(a, b)
+    for eachDiff in theDiffs:
+        if (eachDiff[0] == "-"):
+            diff_html += "<del>%s</del>" % eachDiff[1:].strip()
+        elif (eachDiff[0] == "+"):
+            diff_html += "<ins>%s</ins>" % eachDiff[1:].strip()
+        else:
+            diff_html += eachDiff[1:].strip()
+
+        diff_html += "\n"
+
+    return diff_html
+
+
 #
 # Babel
 #
-
 @babel.localeselector
 def get_locale():
     if current_user.is_authenticated:

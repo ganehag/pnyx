@@ -29,11 +29,14 @@
 					</div>
 				</div>
 
-                {% if entry.author_id == current_user.id %}
                 <div class="float-right">
-                    <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-primary">{% trans %}Edit{% endtrans %}</a>
-                </div>
+                {% if entry.modified %}
+                    <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="btn btn-light">{% trans %}Revisions{% endtrans %}</a>
                 {% endif %}
+                {% if entry.author_id == current_user.id %}
+                    <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-primary">{% trans %}Edit{% endtrans %}</a>
+                {% endif %}
+                </div>
 
                 <span style="font-size: 80%;" class="card-text text-primary">
                 {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
@@ -190,6 +193,7 @@ $('document').ready(function() {
 
     vote_btn();
 
+
     $('#btn-load-comments').click(function(e) {
         e.preventDefault();
 
@@ -218,8 +222,6 @@ $('document').ready(function() {
 			ta.find('input[name=parent]').val($(this).data('id'));
 		}
 	});
-
-	
 
 	$('a.vote-btn').each(function(item) {
 		var self = this;

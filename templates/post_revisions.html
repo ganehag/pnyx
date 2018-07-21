@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}{{ entry.title }}{% endblock %}
+
+{% block page_header %}
+<div class="col mx-auto wider-max">
+  <h3 class="pt-3 pb-3 my-2">
+    <span class="semi-transparent">
+     <a class="text-primary" href="{{ url_for('detail', community=community.name, slug=entry.slug) }}">{{ entry.title }}</a>
+    </span>
+  </h3>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mx-auto wider-max">
+    <div class="col-lg">
+        <div class="card mb-3">
+          <div class="row card-body vdivide">
+            <div class="col-md-6">
+              <h5>{% trans %}Current{% endtrans %}</h5>
+              {{ entry.content|nl2br }}
+            </div>
+            <div class="col-md-6">
+              <h5>{% trans %}Revision{% endtrans %} #<span id="revision_header_number">{{ (entry.history|first).revision }}</span></h5>
+              <div id="diff-right-content">{{ (entry.history|first).content|nl2br }}</div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 lonely-column">
+      <h6 class="ml-3">{% trans %}Revisions{% endtrans %}</h6>
+      <div class="card mb-3">
+        <div class="list-group list-group-flush">
+          {% for item in entry.history %}
+          <a href="#" class="list-group-item rev-btn {% if loop.index == 1 %}active{% endif %}" data-revision="{{ item.revision }}">
+            <span class="float-left">#{{ item.revision }}</span>
+            <span class="timeago float-right">{{ item.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+            <div class="content" style="display: none;">
+              {{ item.content|nl2br }}
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+     {% include "side_footer.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+$('document').ready(function() {
+  $('.rev-btn').click(function(e) {
+    e.preventDefault();
+    var content = $(this).find('> .content').html();
+    $('#diff-right-content').html(content);
+    $('#revision_header_number').text($(this).data('revision'));
+    $(this).addClass('active').siblings().removeClass('active');
+  });
+});
+{% endblock %}
