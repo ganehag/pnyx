@@ -226,6 +226,7 @@ def post_edit(slug):
 
             entry.modified = datetime.datetime.now()
             entry.content = new_content
+            entry.update_search_index()
             entry.save()
 
         return redirect(
