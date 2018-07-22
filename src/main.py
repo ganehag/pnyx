@@ -187,7 +187,6 @@ def submit(user=None, community=None):
                         entry.save()
 
                 except peewee.IntegrityError as e:
-                    print(e)
                     flash('This title is already in use.', 'error')
                 else:
 
