@@ -34,10 +34,10 @@
       <div class="card mb-3">
         <div class="list-group list-group-flush">
           {% for item in entry.history %}
-          <a href="#" class="list-group-item rev-btn {% if loop.index == 1 %}active{% endif %}" data-revision="{{ item.revision }}">
+          <a href="#" class="list-group-item rev-btn {% if loop.index == 1 %}active{% endif %}" data-revision="{{ item.revision }}" title="{% trans %}Change caused by{% endtrans %} {{ item.user.username }}">
             <span class="float-left">#{{ item.revision }}</span>
             <span class="timeago float-right">{{ item.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-            <div class="content" style="display: none;">
+            <div class="content" data-user="{{ item.user.username }}" style="display: none;">
               {{ item.content|nl2br }}
             </div>
           </a>
