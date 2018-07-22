@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% trans %}Open Source Licenses{% endtrans %}
+{% endblock %}
+
+
+{% block body %}
+<style>
+html, body {
+    margin: 0;
+    min-height: 100vh;
+    background: #FFF;
+}
+.main-frame .panel-left {
+    width: 156px;
+    height: 100vh;
+    background-image: url('/static/images/sidebar-pnyx.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+</style>
+
+<div class="container-fluid main-frame h-100">
+    <div class="row h-100">
+        <div class="panel-left col-2 col-sm-2 col-md-2 col-lg-1"></div>
+
+        <div class="my-auto pl-3 col-10 col-sm-10 col-md-10 col-lg-11 h-100" style="max-height: 100vh; overflow-y: auto;">
+            <h3 class="my-3">{% trans %}Open Source Licenses{% endtrans %} <i class="fab fa-osi float-right"></i></h3>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><h5 class="d-inline-block">Pnyx</h5><span class="float-right">BSD-3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">JQuery 3</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">SlideOut</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Popper</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Bootstrap 4</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Moment.js</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Select2</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Font Awesome 5</h5><span class="float-right">Icons — CC BY 4.0 License<br>Fonts — SIL OFL 1.1 License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Babel</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Assets</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Babel</h5><span class="float-right">BSD-3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Cache</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Caching</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Compress</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-Login</h5><span class="float-right">MIT License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Flask-WTF</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Jinja2</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Markdown</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">MarkupSafe</h5><span class="float-right">BSD License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">PyYAML</h5><span class="float-right">MIT License</span></li>
+
+
+                {#
+
+                <li class="list-group-item"><h5 class="d-inline-block">Popper</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Bootstrap 4</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Moment.js</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Moment.js</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Popper</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Bootstrap 4</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Moment.js</h5><span class="float-right">BSD 3-Clause License</span></li>
+                <li class="list-group-item"><h5 class="d-inline-block">Moment.js</h5><span class="float-right">BSD 3-Clause License</span></li>
+
+                #}
+            </ul>
+        </div>        
+    </div>
+</div>
+
+
+{#
+
+
+ Name                Version         License                                                           
+ Babel               2.6.0           BSD                                                               
+ Faker               0.8.16          MIT License                                                       
+ Flask               1.0.2           BSD                                                               
+ Flask-Assets        0.12            BSD                                                               
+ Flask-Babel         0.11.2          BSD                                                               
+ Flask-Cache         0.13.1          BSD                                                               
+ Flask-Caching       1.4.0           BSD                                                               
+ Flask-Compress      1.4.0           MIT                                                               
+ Flask-Login         0.4.1           MIT                                                               
+ Flask-WTF           0.14.2          BSD                                                               
+ Genshi              0.7             BSD                                                               
+ Jinja2              2.10            BSD                                                               
+ Markdown            2.6.11          BSD License                                                       
+ MarkupSafe          1.0             BSD                                                               
+ PyYAML              3.13            MIT                                                               
+ SQLAlchemy          1.2.9           MIT License                                                       
+ Unidecode           1.0.22          GPL                                                               
+ WTForms             2.2.1           BSD                                                               
+ Werkzeug            0.14.1          BSD                                                               
+ click               6.7             UNKNOWN                                                           
+ cssmin              0.2.0           UNKNOWN                                                           
+ flask-peewee        3.0.3           BSD                                                               
+ gunicorn            19.9.0          MIT                                                               
+ itsdangerous        0.24            UNKNOWN                                                           
+ migra               1.0.1521442627  UNKNOWN                                                           
+ pathlib             1.0.1           MIT License                                                       
+ peewee              3.6.4           UNKNOWN                                                           
+ pkg-resources       0.0.0           UNKNOWN                                                           
+ psycopg2            2.7.5           LGPL with exceptions or ZPL                                       
+ psycopg2-binary     2.7.5           LGPL with exceptions or ZPL                                       
+ pyaml               17.12.1         WTFPL                                                             
+ pylibmc             1.5.2           3-clause BSD <http://www.opensource.org/licenses/bsd-license.php> 
+ python-dateutil     2.7.3           Dual License                                                      
+ python-slugify      1.2.5           MIT                                                               
+ pytz                2018.5          MIT                                                               
+ redis               2.10.6          MIT                                                               
+ schemainspect       0.1.1530867186  UNKNOWN                                                           
+ six                 1.11.0          MIT                                                               
+ sqlbag              0.1.1530756414  UNKNOWN                                                           
+ text-unidecode      1.2             Artistic License                                                  
+ username-generator  2.0.0           MIT                                                               
+ waitress            1.1.0           ZPL 2.1                                                           
+ webassets           0.12.1          BSD                                                               
+ wtf-peewee          3.0.0           MIT                                                               
+ yolk3k              0.9             BSD License  
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/slideout/1.0.1/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha256-xaF9RpdtRxzwYMWg4ldJoyPWqyDPCRD0Cv7YEEe6Ie8=" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" integrity="sha256-CutOzxCRucUsn6C6TcEYsauvvYilEniTXldPa6/wu0k=" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js" integrity="sha256-FA14tBI8v+/1BtcH9XtJpcNbComBEpdawUZA6BPXRVw=" crossorigin="anonymous"></script>
+#}
+
+{% endblock %}

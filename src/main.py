@@ -794,6 +794,11 @@ def search():
     return render_template('search.html', search=search_query, pagination=None)
 
 
+@app.route('/licenses')
+def licenses():
+    return render_template('licenses.html')
+
+
 @app.template_filter('clean_querystring')
 def clean_querystring(request_args, *keys_to_remove, **new_values):
     querystring = dict((key, value) for key, value in request_args.items())
