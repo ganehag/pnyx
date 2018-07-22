@@ -42,7 +42,7 @@ from playhouse.shortcuts import model_to_dict, dict_to_model
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser,
                     Proposal, CommentVote, PostVote, Moderator, Tag,
-                    PostHistory, db)
+                    PostHistory, PostInternalVote, db)
 
 from slugify import slugify
 
@@ -879,8 +879,8 @@ def get_locale():
 
 def create_db_tables():
     database.create_tables([Comment, User, Community, CommunityUser, Proposal,
-                            CommentVote, PostVote, Moderator, Tag, PostHistory
-                            ])
+                            CommentVote, PostVote, Moderator, Tag, PostHistory,
+                            PostInternalVote])
 
 
 login_manager.init_app(app)
