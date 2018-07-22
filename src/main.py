@@ -221,6 +221,7 @@ def post_edit(slug):
             if new_content != entry.content:
                 ph = PostHistory()
                 ph.post = entry
+                ph.user_id = current_user.id
                 ph.content = entry.content
                 ph.save()
 
