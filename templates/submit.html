@@ -4,6 +4,58 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+
+<style>
+.tln-active, .tln-wrapper, .tln-line {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    outline: 0;
+    box-sizing: border-box;
+    vertical-align: middle;
+    list-style: none;
+}
+.tln-active {
+    display: inline-block;
+    padding: 10px;
+    width: calc(100% - 28px);
+    height: 100%;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: monospace;
+    word-break: break-all;
+    border: 1px solid #aeaeae;
+    background-color: #fff;
+    resize: none;
+    overflow-wrap: normal;
+    overflow-x: auto;
+    white-space: pre;
+}
+.tln-wrapper {
+    width: 28px;
+    padding: 11px 5px 35px;
+    height: 100%;
+    word-break: break-all;
+    overflow: hidden;
+    display: inline-block;
+    counter-reset: line;
+}
+.tln-line {
+    width: 100%;
+    display: block;
+    text-align: right;
+    line-height: 1.5;
+    font-size: 14px;
+    color: #aeaeae;
+}
+.tln-line::before {
+    counter-increment: line;
+    content: counter(line);
+    font-size: 14px;
+    user-select: none;
+}
+</style>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -74,11 +126,30 @@
           </div>
 
           <div class="form-group">
-            <button class="btn btn-primary" type="submit">{% block save_button %}{% trans %}Publish{% endtrans %}{% endblock %}</button>
+            <div class="custom-control custom-checkbox">
+              <input class="custom-control-input" type="checkbox" value="" id="use-internal-vote" {% if entry.vote_options %}checked="checked"{% endif %}>
+              <label class="custom-control-label" for="use-internal-vote">
+                {% trans %}Add voting{% endtrans %}
+              </label>
+            </div>
+          </div>
+
+          <div id="intVoteTaWrapper" class="d-none">
+            <hr>
+            <small id="intVoteHelp" class="form-text text-muted text-right">{% trans %}One option on each line.{% endtrans %}</small>
+            <div class="form-group mb-0" style="height: 150px;">
+              <textarea class="form-control" id="internalvote" name="internalvote" disabled="disabled">{{ entry.vote_options }}</textarea>
+            </div>
+            <small class="form-text text-danger text-right">{% trans %}Any future change to any of these lines will reset all the voting results for this post.{% endtrans %}</small>
+          </div>
+
+          <div class="form-group mt-5">
+            <button class="btn btn-primary" type="submit">{% trans %}Publish{% endtrans %}</button>
           </div>
 
       </div>
     </div>
+
     </form>
   </div>
 
@@ -101,8 +172,77 @@
 {% endblock %}
 
 {% block js %}
+
 $(document).ready(function() {
+  let updateLineNo = function(txta, element) {
+      var lines = txta.val().split('\n').length,
+          child_count = $(element).children().length,
+          diff = lines - child_count;
+
+      if(diff > 0) {
+          while(diff > 0) {
+              var line_number = $('<span></span>');
+              line_number.addClass('tln-line');
+              $(element).append(line_number);
+              diff--;
+          }
+      } else if(diff < 0) {
+          while(diff < 0) {
+              $(element).find(':first-child').remove();
+              diff++;
+          }
+      }
+  }
+
+  let activateLineNo = function(id) {
+      var txta = $(id),
+          ta = txta.get(0);
+
+      if(txta == null || txta.hasClass("tln-active")) {
+          return null;
+      }
+
+      txta.addClass('tln-active');
+      txta.attr('style', '');
+
+      var el = $('<div></div>');
+      el.insertBefore(txta);
+      el.addClass('tln-wrapper');
+
+      updateLineNo(txta, el);
+
+      ta.onpropertychange = ta.oninput = ta.onkeydown = ta.onkeyup = function(ta, el) {
+          return function(e) {
+              if((e.keyCode==36||e.which==36||e.code=="Home"||e.key=="Home")
+              ||  e.keyCode==13||e.which==13||e.code=="Enter"
+              ||  e.code=="NumpadEnter"||e.key=="Enter")
+                  ta.scrollLeft = 0;
+              updateLineNo(txta, el);
+          }
+      }(ta, el);
+
+      ta.onchange = ta.onmousewheel = ta.onscroll = function(ta, el) {
+          return function() {
+            el.scrollTop(ta.scrollTop);
+          }
+      }(ta, el);
+  }
+
+  activateLineNo('#internalvote');
+
   var easyMDE = new EasyMDE({element: $('#content')[0]});
+
+  $('#use-internal-vote').change(function(e) {
+    e.preventDefault();
+
+    if($(this).is(':checked')) {
+      $('#intVoteTaWrapper').removeClass('d-none').find('textarea').removeAttr('disabled');
+    } else {
+      $('#intVoteTaWrapper').addClass('d-none').find('textarea').attr('disabled', 'disabled');
+    }
+  });
+
+  $('#use-internal-vote').trigger('change');
 
   {% if not (entry and entry.slug) %}
 
