@@ -53,19 +53,35 @@
 					<h6 class="card-text text-muted" >{{ entry.vote_percent }}</h6>
 				</div>
 
-				<hr>
-
-				<form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
-					<input type="hidden" name="slug" value="{{ entry.slug }}">
-					<input type="hidden" name="parent" value="">
-					<div class="form-group">
-	            		<textarea class="form-control" style="height: 150px;" id="content" name="content" placeholder="What are your thoughts?"></textarea>
-	          		</div>
-					<div class="text-right mb-3">
-						<button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
-					</div>
-				</form>
 			</div>
+
+            {% if entry.vote_options %}
+
+            <hr>
+
+            <div class="card-body">
+            
+                <h4>{% trans %}Vote{% endtrans %}</h4>
+
+                <ul class="list-group">
+                {% for option in entry.vote_options_list %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center"">
+                        <span>
+                        <button type="button" class="btn btn-light mr-2 btn-int-vote" data-vote="{{ option.title }}"><i class="fas fa-check"></i></button>
+                        {{ option.title }}
+                        </span>
+                        <span>
+                            <div class="progress d-inline-flex" style="height: 5px; width: 100px; transform: scaleX(-1); -webkit-transform: scaleX(-1); -o-transform: scaleX(-1); -moz-transform: scaleX(-1);";>
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ option.percentage }}%;" aria-valuenow="{{ option.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="badge badge-light badge-pill">{{ option.value }}</span>
+                        </span>
+                    </li>
+                {% endfor %}
+                </ul>
+
+            </div>
+            {% endif %}
 		</div>
 
 		<div class="card mb-3">
@@ -82,6 +98,19 @@
 				</form>
 			</div>
 			<div id="comments" class="card-body">
+                <form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+                    <input type="hidden" name="slug" value="{{ entry.slug }}">
+                    <input type="hidden" name="parent" value="">
+                    <div class="form-group">
+                        <textarea class="form-control" style="height: 150px;" id="content" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
+                    </div>
+                    <div class="text-right mb-3">
+                        <button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
+                    </div>
+                </form>
+
+                <hr>
+
 				{% include 'includes/comments.html' %}
 
                 {% if entry.num_remaining_comments > 0 %}
@@ -192,6 +221,18 @@ $('document').ready(function() {
     }
 
     vote_btn();
+
+    $('.btn-int-vote').click(function(e) {
+        e.preventDefault();
+
+        $.ajax({
+            url: '{{ url_for('proposal_intvote', slug=entry.slug) }}',
+            method: 'POST',
+            data: {vote: $(this).data('vote')}
+        }).done(function(reply) {
+            window.location.reload();
+        });        
+    });
 
 
     $('#btn-load-comments').click(function(e) {

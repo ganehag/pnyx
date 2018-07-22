@@ -171,6 +171,7 @@ def submit(user=None, community=None):
             entry.title = request.form.get('title') or ''
             entry.content = request.form.get('content') or ''
             entry.published = request.form.get('published') or True
+            entry.vote_options = request.form.get('internalvote') or None
             entry.author = User.get(User.id == current_user.id)
             entry.community = Community.get(Community.name == community)
 
@@ -217,6 +218,7 @@ def post_edit(slug):
     if request.method == 'POST':
         with database.atomic():
             new_content = request.form.get('content') or ''
+            new_vote_opt = request.form.get('internalvote', None)
 
             if new_content != entry.content:
                 ph = PostHistory()
@@ -224,6 +226,13 @@ def post_edit(slug):
                 ph.user_id = current_user.id
                 ph.content = entry.content
                 ph.save()
+
+            if new_vote_opt is not None and new_vote_opt != entry.vote_options:
+                PostInternalVote.delete().where(
+                    PostInternalVote.post == entry
+                ).execute()
+                # Drop all existing votes
+                entry.vote_options = new_vote_opt
 
             entry.modified = datetime.datetime.now()
             entry.content = new_content
@@ -418,6 +427,33 @@ def community_search():
 #
 # Voting
 #
+
+@app.route('/p/intvote/<slug>', methods=['POST'])
+@login_required
+@database.atomic()
+def proposal_intvote(slug):
+    vote = content = request.form.get('vote') or None
+    if not vote:
+        return jsonify({"error": "invalid vote parameter"}), 400
+
+    prop = Proposal.get(Proposal.slug == slug)
+
+    if vote == '':  # Pull vote
+        PostInternalVote.delete().where(
+            PostInternalVote.user_id == current_user.id and
+            PostInternalVote.post == post
+        ).execute()
+
+    else:
+        rowid = (PostInternalVote.insert(
+            post=prop, user=current_user.id, vote=vote
+        ).on_conflict(
+            conflict_target=[PostInternalVote.user, PostInternalVote.post],
+            preserve=[PostInternalVote.vote, PostInternalVote.timestamp]
+        ).execute())
+
+    return jsonify({"status": "ok"})
+
 
 @app.route('/p/upvote/<slug>', methods=['GET'])
 @login_required
