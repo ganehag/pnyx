@@ -40,6 +40,10 @@ class Proposal(db.Model):
     pass
 
 
+class PostInternalVote(db.Model):
+    pass
+
+
 class AnonymousUser():
     username = "Anonymous"
     password = ""
@@ -253,6 +257,7 @@ class CommunityUser(db.Model):
 
 class PostHistory(db.Model):
     post = ForeignKeyField(Proposal)
+    user = ForeignKeyField(User)
     timestamp = DateTimeField(default=datetime.datetime.now)
     content = TextField()
 
@@ -277,6 +282,8 @@ class Proposal(db.Model):
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     modified = DateTimeField(default=None, null=True)
 
+    vote_options = TextField(default=None, null=True)
+
     @classmethod
     def all(cls):  # Except search content
         return Proposal.select(Proposal.id,
@@ -289,7 +296,8 @@ class Proposal(db.Model):
                                Proposal.upvotes,
                                Proposal.downvotes,
                                Proposal.timestamp,
-                               Proposal.modified)
+                               Proposal.modified,
+                               Proposal.vote_options)
 
     def save(self, *args, **kwargs):
         # Generate a URL-friendly representation of the entry's title.
@@ -499,16 +507,47 @@ class Proposal(db.Model):
 
     @property
     def history(self):
-        return PostHistory.select(PostHistory.timestamp,
-                                  PostHistory.content,
-                                  PostHistory.rev
-                                  ).where(
-                                    PostHistory.post == self
-                                  ).order_by(SQL('revision').desc())
+        return PostHistory.select(
+            PostHistory.timestamp,
+            PostHistory.content,
+            PostHistory.rev,
+            PostHistory.user
+        ).where(
+            PostHistory.post == self
+        ).order_by(SQL('revision').desc())
 
     @property
     def history_skip_latest(self):
         return self.history.offset(1)
+
+    @property
+    def vote_options_list(self):
+        if not self.vote_options:
+            return []
+
+        int_vote_list = PostInternalVote.select(
+                PostInternalVote.vote,
+                fn.COUNT(PostInternalVote.vote)
+            ).where(
+                PostInternalVote.post == self
+            ).group_by(PostInternalVote.vote)
+
+        vlut = {
+            x.vote: x.count for x in int_vote_list
+        }
+
+        total = sum(vlut.values())
+
+        result = []
+        for item in self.vote_options.splitlines():
+            value = vlut.get(item, 0)
+            result.append({
+                "title": item,
+                "value": value,
+                "percentage": 0 if total == 0 else round((value / total) * 100)
+            })
+
+        return result
 
 
 class Comment(db.Model):
@@ -537,6 +576,18 @@ class PostVote(db.Model):
     user = ForeignKeyField(User)
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     vote = IntegerField(default=0)
+
+    class Meta:
+        indexes = (
+            (('post', 'user'), True),
+        )
+
+
+class PostInternalVote(db.Model):
+    post = ForeignKeyField(Proposal)
+    user = ForeignKeyField(User)
+    timestamp = DateTimeField(default=datetime.datetime.now, index=True)
+    vote = CharField()
 
     class Meta:
         indexes = (
@@ -584,4 +635,3 @@ class Tag(db.Model):
                 .group_by(Tag.title, Community.name)
                 .order_by(Tag.title, Community.name)
                 .objects())
-
