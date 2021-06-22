@@ -12,6 +12,7 @@ import re
 import hashlib
 import math
 import datetime
+import random
 import time
 import yaml
 
@@ -20,7 +21,7 @@ from itertools import groupby
 from urllib.parse import urlparse, urljoin, urlencode
 
 from flask import (Flask, abort, flash, Markup, redirect, render_template,
-                   request, Response, session, url_for, jsonify)
+                   request, Response, session, url_for, jsonify, current_app)
 from flask_assets import Environment, Bundle
 from flask_login import (
     LoginManager, current_user,
@@ -63,7 +64,7 @@ def create_app(config_file='config.yaml'):
               os.environ.get('PNYXCONF'), None]:
         try:
             with open(f) as cfg:
-                config = yaml.load(cfg.read())
+                config = yaml.safe_load(cfg.read())
                 if config:
                     break
 
@@ -95,12 +96,19 @@ login_manager = LoginManager()
 login_manager.login_view = "login"
 assets = Environment(app)
 
+css_easymde = Bundle('css/easymde.min.css',
+                     output='gen/easymde.min.css')
+js_easymde = Bundle('js/easymde.min.js',
+                    output='gen/easymde.min.js')
+
 css = Bundle('css/bootstrap_pnyx.min.css',
              'css/select2-bootstrap4.min.css',
              'css/pnyx.css',
              # filters='cssmin',
              output='gen/screen.css')
 assets.register('css_all', css)
+assets.register('css_easymde', css_easymde)
+assets.register('js_easymde', js_easymde)
 
 db.init_app(app)
 database = db.database
@@ -172,6 +180,9 @@ def submit(user=None, community=None):
             entry.content = request.form.get('content') or ''
             entry.published = request.form.get('published') or True
             entry.vote_options = request.form.get('internalvote') or None
+            entry.usepositions = (
+                True if request.form.get('use-positions') == '' else False
+            )
             entry.author = User.get(User.id == current_user.id)
             entry.community = Community.get(Community.name == community)
 
@@ -219,6 +230,9 @@ def post_edit(slug):
         with database.atomic():
             new_content = request.form.get('content') or ''
             new_vote_opt = request.form.get('internalvote', None)
+            new_usepositions = (
+                True if request.form.get('use-positions') == '' else False
+            )
 
             if new_content != entry.content:
                 ph = PostHistory()
@@ -233,6 +247,9 @@ def post_edit(slug):
                 ).execute()
                 # Drop all existing votes
                 entry.vote_options = new_vote_opt
+
+            if new_usepositions != entry.usepositions:
+                entry.usepositions = new_usepositions
 
             entry.modified = datetime.datetime.now()
             entry.content = new_content
@@ -633,7 +650,48 @@ def comment_downvote(slug, comment_id):
 
     Comment.save(comment)
     # FIXME move karma to another table
-    User.save(current_user)
+    # User.save(current_user)
+
+    result["score"] = str(comment.score)
+
+    return jsonify(result)
+
+
+@app.route('/p/blankvote/<slug>/<comment_id>', methods=['GET'])
+@login_required
+@database.atomic()
+def comment_blankvote(slug, comment_id):
+    # Ensure comment belongs to slug
+    # prop = Proposal.get(Proposal.slug == slug)
+    comment = Comment.get(Comment.id == comment_id)
+
+    result = {"diff": '0', "score": str(comment.score)}
+
+    if current_user.id == comment.user_id or current_user.karma <= 0:
+        return jsonify(result)
+
+    score_mod = 1
+
+    if current_user.has_upvoted(comment):
+        comment.score -= 1
+        score_mod = 2
+        result["diff"] = str(-score_mod)
+    elif current_user.has_downvoted(comment):
+        comment.score += 1
+        score_mod = 2
+        result["diff"] = str(score_mod)
+
+    Comment.save(comment)
+
+    rowid = (CommentVote.insert(
+        comment=comment, user=current_user.id, vote=0
+    ).on_conflict(
+        conflict_target=[CommentVote.user, CommentVote.comment],
+        preserve=[CommentVote.vote, CommentVote.timestamp]
+    ).execute())
+
+    # FIXME move karma to another table
+    # User.save(current_user)
 
     result["score"] = str(comment.score)
 
@@ -641,9 +699,8 @@ def comment_downvote(slug, comment_id):
 
 
 #
-# Proposal load all comments
+# Proposal, load all comments
 #
-
 @app.route('/p/<slug>/comments', methods=['GET'])
 @cache.cached(timeout=50)
 def all_comments_for_post(slug):
@@ -653,9 +710,79 @@ def all_comments_for_post(slug):
 
 
 #
+# Proposal, load random comment
+#
+@app.route('/p/<slug>/random_comment', methods=['GET'])
+@cache.cached(timeout=50)
+def random_comment_for_post(slug):
+    entry = get_object_or_404(Proposal, Proposal.slug == slug)
+    comments = entry.comments()
+    return render_template('random_comment.html', entry=entry,
+                           reply=random.choice(comments))
+
+
+#
+# Proposal, load random comment
+#
+@app.route('/p/<slug>/report', methods=['GET'])
+@cache.cached(timeout=50)
+def report_for_post(slug):
+    entry = get_object_or_404(Proposal, Proposal.slug == slug)
+
+    comments = Comment.select(
+        Comment.id,
+        Comment.content,
+        CommentVote.vote,
+        peewee.fn.COUNT(CommentVote.vote)).join(CommentVote).where(
+        Comment.post == entry).group_by(Comment.id, CommentVote.vote).order_by(
+            Comment.timestamp).dicts()
+
+    result_list = []
+    for key, grp in groupby(comments, key=lambda x: x['id']):
+        item = {
+            'content': None,
+            'options': {
+                'yes': 0,
+                'no': 0,
+                'undecided': 0
+            },
+            'percentages': {
+                'yes': 0,
+                'no': 0,
+                'undecided': 0
+            },
+            'total_votes': 0
+        }
+
+        for v in grp:
+            item['content'] = v['content']
+
+            if v['vote'] == 0:
+                item['options']['undecided'] = v['count']
+
+            elif v['vote'] == 1:
+                item['options']['yes'] = v['count']
+
+            elif v['vote'] == -1:
+                item['options']['no'] = v['count']
+
+        total = float(sum(item['options'].values()))
+        item['total_votes'] = total
+        item['percentages']['yes'] = round(
+            (item['options']['yes'] / total) * 100)
+        item['percentages']['no'] = round(
+            (item['options']['no'] / total) * 100)
+        item['percentages']['undecided'] = round(
+            (item['options']['undecided'] / total) * 100)
+        result_list.append(item)
+
+    return render_template('very_basic_report.html', entry=entry,
+                           comments=result_list)
+
+
+#
 # Login/Logout/Register
 #
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     # Here we use a class of some kind to represent and validate our
@@ -856,6 +983,7 @@ def load_user(user_id):
 def request_wants_json():
     best = request.accept_mimetypes \
         .best_match(['application/json', 'text/html'])
+
     return best == 'application/json' and \
         request.accept_mimetypes[best] > \
         request.accept_mimetypes['text/html']
@@ -920,11 +1048,33 @@ def create_db_tables():
                             PostInternalVote])
 
 
+def site_map():
+    def has_no_empty_params(rule):
+        defaults = rule.defaults if rule.defaults is not None else ()
+        arguments = rule.arguments if rule.arguments is not None else ()
+        return len(defaults) >= len(arguments)
+
+    links = []
+    for rule in current_app.url_map.iter_rules():
+        # Filter out rules we can't navigate to in a browser
+        # and rules that require parameters
+        if "GET" in rule.methods and has_no_empty_params(rule):
+            url = url_for(rule.endpoint, **(rule.defaults or {}))
+            links.append((url, rule.endpoint))
+
+    return links
+
+
 login_manager.init_app(app)
 
 if __name__ == '__main__':
     if "--setup" in sys.argv:
         create_db_tables()
         print(gettext("Database tables created"))
+
+    elif "--sitemap" in sys.argv:
+        with app.app_context():
+            for item in site_map():
+                print(item)
     else:
         app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)

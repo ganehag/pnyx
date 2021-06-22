@@ -3,7 +3,9 @@
 {% block title %}{% trans %}Create entry{% endtrans %}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+{% assets "css_easymde" %}
+<link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}">
+{% endassets %}
 
 <style>
 .tln-active, .tln-wrapper, .tln-line {
@@ -59,7 +61,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+{% assets "js_easymde" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 {% endblock %}
 
 
@@ -130,6 +134,15 @@
               <input class="custom-control-input" type="checkbox" value="" id="use-internal-vote" {% if entry.vote_options %}checked="checked"{% endif %}>
               <label class="custom-control-label" for="use-internal-vote">
                 {% trans %}Add voting{% endtrans %}
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="custom-control custom-checkbox">
+              <input class="custom-control-input" type="checkbox" value="" name="use-positions" id="use-positions" {% if entry.usepositions %}checked="checked"{% endif %}>
+              <label class="custom-control-label" for="use-positions">
+                {% trans %}Use comments as positions{% endtrans %}
               </label>
             </div>
           </div>

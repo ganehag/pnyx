@@ -111,9 +111,9 @@
 
                 <hr>
 
-				{% include 'includes/comments.html' %}
+				        {% include 'includes/comments.html' %}
 
-                {% if entry.num_remaining_comments > 0 %}
+                {% if entry.num_remaining_comments > 0 and entry.usepositions == False %}
                 <button id="btn-load-comments" class="btn btn-link">{{ entry.num_remaining_comments }} {% trans %}more replies{% endtrans %}</button>
                 <div id="load-more-comments" class="d-none">
                     <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
@@ -225,11 +225,16 @@ $('document').ready(function() {
     $('.btn-int-vote').click(function(e) {
         e.preventDefault();
 
-        $.ajax({
+        $.getJSON({
             url: '{{ url_for('proposal_intvote', slug=entry.slug) }}',
             method: 'POST',
             data: {vote: $(this).data('vote')}
         }).done(function(reply) {
+            if(reply && reply.error && reply.code == 401) {
+                $('#loginModal').modal('show');
+                return;
+            }
+
             window.location.reload();
         });        
     });
@@ -274,10 +279,10 @@ $('document').ready(function() {
 			e.preventDefault();
 
 			var jqxhr = $.getJSON($(self).data('target'), function(result) {
-                if(result && result.error && result.code == 401) {
-                  $('#loginModal').modal('show');
-                  return;
-                }
+            if(result && result.error && result.code == 401) {
+              $('#loginModal').modal('show');
+              return;
+            }
 
 		        var vote_counter = $(self).parent().parent().find('span.vote-counter')
 		        vote_counter.text(result.votes);

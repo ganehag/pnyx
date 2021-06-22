@@ -166,6 +166,21 @@ class User(db.Model):
 
         return None
 
+    def has_voted(self, item):
+        if isinstance(item, Proposal):
+            return PostVote.select().where(
+                (PostVote.post == item) &
+                (PostVote.user == self)
+            ).count() > 0
+
+        elif isinstance(item, Comment):
+            return CommentVote.select().where(
+                (CommentVote.comment == item) &
+                (CommentVote.user == self)
+            ).count() > 0
+
+        return None
+
     def get_id(self):
         return self.id
 
@@ -283,6 +298,7 @@ class Proposal(db.Model):
     modified = DateTimeField(default=None, null=True)
 
     vote_options = TextField(default=None, null=True)
+    usepositions = BooleanField(default=False)
 
     @classmethod
     def all(cls):  # Except search content
@@ -297,7 +313,8 @@ class Proposal(db.Model):
                                Proposal.downvotes,
                                Proposal.timestamp,
                                Proposal.modified,
-                               Proposal.vote_options)
+                               Proposal.vote_options,
+                               Proposal.usepositions)
 
     def save(self, *args, **kwargs):
         # Generate a URL-friendly representation of the entry's title.
@@ -409,6 +426,10 @@ class Proposal(db.Model):
         return Comment.select().where(Comment.post_id == self.id).count()
 
     def comments(self, show_all=False):
+        if self.usepositions:
+            return Comment.select().where(
+                Comment.post == self).order_by(fn.Random()).limit(3).dicts()
+
         def resolve_comment(path, base):
             if os.path.dirname(path) == '':
                 comment = comment_dict[int(os.path.basename(path))]
