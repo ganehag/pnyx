@@ -1,0 +1,21 @@
+# babel.cfg
+[ignore: venv/**]
+
+[python: src/**.py]
+encoding = utf-8
+
+[jinja2: **/templates/**.html]
+encoding = utf-8
+extensions=jinja2.ext.autoescape,jinja2.ext.with_,webassets.ext.jinja2.AssetsExtension
+
+# Extract
+pybabel extract -F babel.cfg -o messages.pot .
+
+# Init
+pybabel init -i messages.pot -d translations -l de
+
+# Compile
+pybabel compile -d translations
+
+# Update
+pybabel update -i messages.pot -d translations

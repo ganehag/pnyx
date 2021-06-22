@@ -1,0 +1,4 @@
+src/__pycache__
+static/.webassets-cache
+tools/slack
+venv

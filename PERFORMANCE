@@ -1,0 +1,21 @@
+# Insert speed
+
+Using GNU parallel I ran 20 simulatious processes to insert random comments into the system.
+
+Num per second: 300.42489062576107
+Num per second: 227.7458379939837
+Num per second: 183.97183689188205
+Num per second: 295.5183667487726
+Num per second: 222.67416858939714
+Num per second: 278.9815848251403
+Num per second: 362.3050397694684
+
+
+# Query Speed
+Fetch paginated page 50000: 1.79s
+Fetch paginated page 1: 0.69s
+Search for 'fugit': 0.36s
+Fetch a community page with 11367 posts (only show 20): 0.15s
+Fetch a post with 2732 and resolve the tree structure: 5.96s
+
+
