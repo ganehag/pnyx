@@ -422,9 +422,9 @@ def community_search():
 
     feeds = [
         {"id": "", "text": "Frontpage"},
-        {"id": "c/popular", "text": "Popular"},
-        {"id": "c/new", "text": "New"},
-        {"id": "c/upvote", "text": "Most upvoted"}
+        {"id": "f/popular", "text": "Popular"},
+        {"id": "f/new", "text": "New"},
+        {"id": "f/upvote", "text": "Most upvoted"}
     ]
 
     # print(json.dumps({"suggestions": feeds + hits}, indent=4))
@@ -849,9 +849,9 @@ def register():
 # Misc
 #
 
-@app.route('/c/upvote')
-@app.route('/c/popular')
-@app.route('/c/new')
+@app.route('/f/upvote')
+@app.route('/f/popular')
+@app.route('/f/new')
 def index():
     query = Proposal.public()
 
@@ -859,17 +859,17 @@ def index():
 
     community = None
 
-    if request.path == "/c/popular":
+    if request.path == "/f/popular":
         query = query.order_by(-Proposal.ranking)
         community = Community(name="popular",
                               description="The most popular posts on Pnyx.")
 
-    elif request.path == "/c/upvote":
+    elif request.path == "/f/upvote":
         query = query.order_by(-(Proposal.upvotes - Proposal.downvotes))
         community = Community(name="upvote",
                               description="The most upvoted posts on Pnyx.")
 
-    elif request.path == "/c/new":
+    elif request.path == "/f/new":
         query = query.order_by(Proposal.timestamp.desc())
         community = Community(name="new",
                               description=gettext(
