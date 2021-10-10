@@ -17,9 +17,14 @@
 
 	<div class="col-lg">
         <!-- edit control -->
+
         <div class="mb-2 d-flex">
+            <a href="{{ url_for('community', community=entry.community.name) }}" class="btn btn-primary mr-2">
+                <i class="fas fa-fw fa-lg fa-chevron-left"></i>
+            </a>
+
         {% if entry.history.count() %}
-            <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="btn btn-secondary">
+            <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="ml-auto btn btn-secondary">
                 <i class="fas fa-sm fa-fw fa-file-alt"></i>
                 {% trans %}Revisions{% endtrans %}
             </a>
