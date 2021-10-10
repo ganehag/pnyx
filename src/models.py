@@ -257,12 +257,20 @@ class Community(db.Model):
             ).order_by(Proposal.timestamp.desc())
 
         for row in posts:
+            modts = row.modified
+            if modts is not None:
+                modts = pytz.utc.localize(modts)
+
+            pubts = row.timestamp
+            if pubts is not None:
+                pubts = pytz.utc.localize(pubts)
+
             fe = fg.add_entry()
             fe.guid("{}/{}".format(base_url, row.slug), True)
             fe.title(row.title)
             fe.link(href="{}/{}".format(base_url, row.slug))
-            fe.published(pytz.utc.localize(row.timestamp))
-            fe.updated(pytz.utc.localize(row.modified))
+            fe.published(pubts)
+            fe.updated(modts)
             fe.content(row.html_content)
             fe.author({
                 "name": row.author.username,
