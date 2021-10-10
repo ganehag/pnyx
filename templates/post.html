@@ -13,122 +13,122 @@
 {% endblock %}
 
 {% block content %}
-<div class="row mx-auto wider-max">
+<div class="container">
+    <div class="row">
+    	<div class="col-lg-12">
+            <!-- edit control -->
 
-	<div class="col-lg">
-        <!-- edit control -->
+            <div class="mb-2 d-flex">
+                <a href="{{ url_for('community', community=entry.community.name) }}" class="btn btn-primary mr-auto">
+                    <i class="fas fa-fw fa-lg fa-chevron-left"></i>
+                </a>
 
-        <div class="mb-2 d-flex">
-            <a href="{{ url_for('community', community=entry.community.name) }}" class="btn btn-primary mr-2">
-                <i class="fas fa-fw fa-lg fa-chevron-left"></i>
-            </a>
-
-        {% if entry.history.count() %}
-            <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="ml-auto btn btn-secondary">
-                <i class="fas fa-sm fa-fw fa-file-alt"></i>
-                {% trans %}Revisions{% endtrans %}
-            </a>
-        {% endif %}
-        {% if entry.author_id == current_user.id %}
-            <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-secondary ml-2">
-                <i class="fas fa-sm fa-fw fa-pencil-alt"></i>
-                {% trans %}Edit{% endtrans %}
-            </a>
-        {% endif %}
-        </div>
-
-		<div class="card shadow-sm mb-3">
-			<div class="card-body" style="margin-left: 40px">
-				<div class="float-left" style="margin-left: -50px; width: 40px; text-align: center;">
-					<div>
-						<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
-					</div>
-					<div>
-                        <span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span>
-                    </div>
-					<div>
-						<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
-					</div>
-				</div>
-				
-				<h4 class="card-title">
-                    {{ entry.title }}
-                </h4>
-				
-				{{ entry.html_content }}
-
-                <!-- post info -->
-                <span style="font-size: 80%;" class="card-text text-primary">
-                {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
-                    <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-                    {% if entry.modified %}
-                    | <span>{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
-                    {% endif %}
-                </span>
-			</div>
-
-            <div class="card-body py-0">
-                <span class="card-text text-muted" >{{ entry.vote_percent }}</span>
-            </div>
-
-            {% if entry.vote_options %}
-                <hr>
-                <div class="card-body py-0">
-                    <h5>{% trans %}Vote{% endtrans %}</h5>
-                    <ul class="list-group">
-                    {% for option in entry.vote_options_list %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center"">
-                            <span>
-                            <button type="button" class="btn btn-light mr-2 btn-int-vote" data-vote="{{ option.title }}"><i class="fas fa-check"></i></button>
-                            {{ option.title }}
-                            </span>
-                            <span>
-                                <div class="progress d-inline-flex" style="height: 5px; width: 100px; transform: scaleX(-1); -webkit-transform: scaleX(-1); -o-transform: scaleX(-1); -moz-transform: scaleX(-1);";>
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ option.percentage }}%;" aria-valuenow="{{ option.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <span class="badge badge-light badge-pill">{{ option.value }}</span>
-                            </span>
-                        </li>
-                    {% endfor %}
-                    </ul>
-                </div>
+            {% if entry.history.count() %}
+                <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="btn btn-secondary">
+                    <i class="fas fa-sm fa-fw fa-file-alt"></i>
+                    {% trans %}Revisions{% endtrans %}
+                </a>
             {% endif %}
-
-            <hr class="mb-0">
-
-            <div class="py-0 pt-1 px-1">
-                <form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
-                    <input type="hidden" name="slug" value="{{ entry.slug }}">
-                    <input type="hidden" name="parent" value="">
-                    <div class="form-group m-0">
-                        <textarea class="form-control" style="background: #F7F7F7; height: 150px;" id="content" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
-                    </div>
-                    <div class="text-right my-1">
-                        <button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
-                    </div>
-                </form>
+            {% if entry.author_id == current_user.id %}
+                <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-secondary ml-2">
+                    <i class="fas fa-sm fa-fw fa-pencil-alt"></i>
+                    {% trans %}Edit{% endtrans %}
+                </a>
+            {% endif %}
             </div>
-		</div>
 
-		<div class="card shadow-sm mb-3">
-			<div id="reply-loc" style="display: none;">
-				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
-					<input type="hidden" name="slug" value="{{ entry.slug }}">
-					<input type="hidden" name="parent" value="">
-					<div class="form-group">
-	            		<textarea class="form-control" style="height: 150px;" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
-	          		</div>
-					<div class="text-right mb-3">
-						<button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
-					</div>
-				</form>
-			</div>
-			<div id="comments" class="card-body">
-		        {% include 'includes/comments.html' %}
-			</div>
-		</div>
-	</div>
+    		<div class="card shadow-sm mb-3">
+    			<div class="card-body" style="margin-left: 40px">
+    				<div class="float-left" style="margin-left: -50px; width: 40px; text-align: center;">
+    					<div>
+    						<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
+    					</div>
+    					<div>
+                            <span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span>
+                        </div>
+    					<div>
+    						<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
+    					</div>
+    				</div>
+    				
+    				<h4 class="card-title">
+                        {{ entry.title }}
+                    </h4>
+    				
+    				{{ entry.html_content }}
 
+                    <!-- post info -->
+                    <span style="font-size: 80%;" class="card-text text-primary">
+                    {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
+                        <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+                        {% if entry.modified %}
+                        | <span>{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+                        {% endif %}
+                    </span>
+    			</div>
+
+                <div class="card-body py-0">
+                    <span class="card-text text-muted" >{{ entry.vote_percent }}</span>
+                </div>
+
+                {% if entry.vote_options %}
+                    <hr>
+                    <div class="card-body py-0">
+                        <h5>{% trans %}Vote{% endtrans %}</h5>
+                        <ul class="list-group">
+                        {% for option in entry.vote_options_list %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center"">
+                                <span>
+                                <button type="button" class="btn btn-light mr-2 btn-int-vote" data-vote="{{ option.title }}"><i class="fas fa-check"></i></button>
+                                {{ option.title }}
+                                </span>
+                                <span>
+                                    <div class="progress d-inline-flex" style="height: 5px; width: 100px; transform: scaleX(-1); -webkit-transform: scaleX(-1); -o-transform: scaleX(-1); -moz-transform: scaleX(-1);";>
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ option.percentage }}%;" aria-valuenow="{{ option.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="badge badge-light badge-pill">{{ option.value }}</span>
+                                </span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <hr class="mb-0">
+
+                <div class="py-0 pt-1 px-1">
+                    <form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+                        <input type="hidden" name="slug" value="{{ entry.slug }}">
+                        <input type="hidden" name="parent" value="">
+                        <div class="form-group m-0">
+                            <textarea class="form-control" style="background: #F7F7F7; height: 150px;" id="content" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
+                        </div>
+                        <div class="text-right my-1">
+                            <button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
+                        </div>
+                    </form>
+                </div>
+    		</div>
+
+    		<div class="card shadow-sm mb-3">
+    			<div id="reply-loc" style="display: none;">
+    				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+    					<input type="hidden" name="slug" value="{{ entry.slug }}">
+    					<input type="hidden" name="parent" value="">
+    					<div class="form-group">
+    	            		<textarea class="form-control" style="height: 150px;" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
+    	          		</div>
+    					<div class="text-right mb-3">
+    						<button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
+    					</div>
+    				</form>
+    			</div>
+    			<div id="comments" class="card-body">
+    		        {% include 'includes/comments.html' %}
+    			</div>
+    		</div>
+    	</div>
+    </div>
 </div>
 {% endblock %}
 
