@@ -14,29 +14,25 @@
 
 {% block content %}
 <div class="row mx-auto wider-max">
-
     <div class="col-lg">
-        <div class="card mb-3">
+        <div class="card shadow-sm mb-3">
             <div class="card-body">
-            
                 {% for item in comments %}
                 <div class="mb-5">
-                <h5>{{ item.content }}</h5>
+                    <h5>{{ item.content }}</h5>
 
-                <div class="progress">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ item.percentages.yes }}%" aria-valuenow="{{ item.percentages.yes }}" aria-valuemin="0" aria-valuemax="100">{{ item.options.yes }}</div>
-                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{ item.percentages.no }}%" aria-valuenow="{{ item.percentages.no }}" aria-valuemin="0" aria-valuemax="100">{{ item.options.no }}</div>
-                    <!-- <div class="progress-bar bg-secondary" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>-->
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ item.percentages.yes }}%" aria-valuenow="{{ item.percentages.yes }}" aria-valuemin="0" aria-valuemax="100">{{ item.options.yes }}</div>
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ item.percentages.no }}%" aria-valuenow="{{ item.percentages.no }}" aria-valuemin="0" aria-valuemax="100">{{ item.options.no }}</div>
+                        <!-- <div class="progress-bar bg-secondary" role="progressbar" style="width: 20%" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>-->
+                    </div>
+
+                    <h8>Total Votes: {{ item.total_votes|int }}</h8>
+
                 </div>
-
-                <h8>Total Votes: {{ item.total_votes|int }}</h8>
-
-                </div>
-
                 {% else %}
-                Nothing to report.
+                    Nothing to report.
                 {% endfor %}
-
             </div>
         </div>
     </div>

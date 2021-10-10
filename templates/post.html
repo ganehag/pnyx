@@ -6,7 +6,7 @@
 <div class="col mx-auto wider-max">
   <h3 class="pt-3 pb-3 my-2">
     <span class="semi-transparent">
-  	 <a class="text-primary" href="{{ url_for('community', community=community.name) }}">c/{{ entry.community.name }}</a>
+  	 <a class="text-primary" href="{{ url_for('community', community=community.name) }}">{{ entry.community.name_with_prefix }}</a>
     </span>
   </h3>
 </div>
@@ -16,75 +16,96 @@
 <div class="row mx-auto wider-max">
 
 	<div class="col-lg">
-		<div class="card mb-3">
+        <!-- edit control -->
+        <div class="mb-2 d-flex">
+        {% if entry.history.count() %}
+            <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="btn btn-secondary">
+                <i class="fas fa-sm fa-fw fa-file-alt"></i>
+                {% trans %}Revisions{% endtrans %}
+            </a>
+        {% endif %}
+        {% if entry.author_id == current_user.id %}
+            <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-secondary ml-2">
+                <i class="fas fa-sm fa-fw fa-pencil-alt"></i>
+                {% trans %}Edit{% endtrans %}
+            </a>
+        {% endif %}
+        </div>
+
+		<div class="card shadow-sm mb-3">
 			<div class="card-body" style="margin-left: 40px">
 				<div class="float-left" style="margin-left: -50px; width: 40px; text-align: center;">
 					<div>
 						<a class="vote-btn" href="{{ url_for('proposal_upvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-up"></i></a>
 					</div>
-					<div><span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span></div>
+					<div>
+                        <span class="vote-counter" style="font-size: 8pt;">{{ entry.votes }}</span>
+                    </div>
 					<div>
 						<a class="vote-btn" href="{{ url_for('proposal_downvote', slug=entry.slug) }}"><i class="fas fa-arrow-alt-circle-down"></i></a>
 					</div>
 				</div>
+				
+				<h4 class="card-title">
+                    {{ entry.title }}
+                </h4>
+				
+				{{ entry.html_content }}
 
-                <div class="float-right">
-                {% if entry.history.count() %}
-                    <a href="{{ url_for('post_revisions', community=community.name, slug=entry.slug) }}" class="btn btn-light"><i class="fas fa-sm fa-fw fa-file-alt"></i> {% trans %}Revisions{% endtrans %}</a>
-                {% endif %}
-                {% if entry.author_id == current_user.id %}
-                    <a href="{{ url_for('post_edit', slug=entry.slug) }}" class="btn btn-primary"><i class="fas fa-sm fa-fw fa-pencil-alt"></i> {% trans %}Edit{% endtrans %}</a>
-                {% endif %}
-                </div>
-
+                <!-- post info -->
                 <span style="font-size: 80%;" class="card-text text-primary">
                 {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
                     <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
                     {% if entry.modified %}
-                    | <span class="badge badge-info">{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
-                {% endif %}
+                    | <span>{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+                    {% endif %}
                 </span>
-				
-				<h4 class="card-title">{{ entry.title }}</h4>
-				
-				{{ entry.html_content }}
-
-				<div style="text-align: right">
-					<h6 class="card-text text-muted" >{{ entry.vote_percent }}</h6>
-				</div>
-
 			</div>
 
-            {% if entry.vote_options %}
-
-            <hr>
-
-            <div class="card-body">
-            
-                <h4>{% trans %}Vote{% endtrans %}</h4>
-
-                <ul class="list-group">
-                {% for option in entry.vote_options_list %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center"">
-                        <span>
-                        <button type="button" class="btn btn-light mr-2 btn-int-vote" data-vote="{{ option.title }}"><i class="fas fa-check"></i></button>
-                        {{ option.title }}
-                        </span>
-                        <span>
-                            <div class="progress d-inline-flex" style="height: 5px; width: 100px; transform: scaleX(-1); -webkit-transform: scaleX(-1); -o-transform: scaleX(-1); -moz-transform: scaleX(-1);";>
-                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ option.percentage }}%;" aria-valuenow="{{ option.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span class="badge badge-light badge-pill">{{ option.value }}</span>
-                        </span>
-                    </li>
-                {% endfor %}
-                </ul>
-
+            <div class="card-body py-0">
+                <span class="card-text text-muted" >{{ entry.vote_percent }}</span>
             </div>
+
+            {% if entry.vote_options %}
+                <hr>
+                <div class="card-body py-0">
+                    <h5>{% trans %}Vote{% endtrans %}</h5>
+                    <ul class="list-group">
+                    {% for option in entry.vote_options_list %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center"">
+                            <span>
+                            <button type="button" class="btn btn-light mr-2 btn-int-vote" data-vote="{{ option.title }}"><i class="fas fa-check"></i></button>
+                            {{ option.title }}
+                            </span>
+                            <span>
+                                <div class="progress d-inline-flex" style="height: 5px; width: 100px; transform: scaleX(-1); -webkit-transform: scaleX(-1); -o-transform: scaleX(-1); -moz-transform: scaleX(-1);";>
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ option.percentage }}%;" aria-valuenow="{{ option.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span class="badge badge-light badge-pill">{{ option.value }}</span>
+                            </span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
+
+            <hr class="mb-0">
+
+            <div class="py-0 pt-1 px-1">
+                <form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
+                    <input type="hidden" name="slug" value="{{ entry.slug }}">
+                    <input type="hidden" name="parent" value="">
+                    <div class="form-group m-0">
+                        <textarea class="form-control" style="background: #F7F7F7; height: 150px;" id="content" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
+                    </div>
+                    <div class="text-right my-1">
+                        <button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
+                    </div>
+                </form>
+            </div>
 		</div>
 
-		<div class="card mb-3">
+		<div class="card shadow-sm mb-3">
 			<div id="reply-loc" style="display: none;">
 				<form id="new_reply_template" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
 					<input type="hidden" name="slug" value="{{ entry.slug }}">
@@ -98,80 +119,11 @@
 				</form>
 			</div>
 			<div id="comments" class="card-body">
-                <form id="new_comment" action="{{ url_for('submit_comment') }}" class="form-horizontal" method="post">
-                    <input type="hidden" name="slug" value="{{ entry.slug }}">
-                    <input type="hidden" name="parent" value="">
-                    <div class="form-group">
-                        <textarea class="form-control" style="height: 150px;" id="content" name="content" placeholder="{% trans %}What are your thoughts?{% endtrans %}"></textarea>
-                    </div>
-                    <div class="text-right mb-3">
-                        <button class="btn btn-success">{% trans %}Comment{% endtrans %}</button>
-                    </div>
-                </form>
-
-                <hr>
-
-				        {% include 'includes/comments.html' %}
-
-                {% if entry.num_remaining_comments > 0 and entry.usepositions == False %}
-                <button id="btn-load-comments" class="btn btn-link">{{ entry.num_remaining_comments }} {% trans %}more replies{% endtrans %}</button>
-                <div id="load-more-comments" class="d-none">
-                    <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-                </div>
-                {% endif %}
+		        {% include 'includes/comments.html' %}
 			</div>
 		</div>
 	</div>
 
-	<div class="col-lg-4 lonely-column">
-     <div class="card mb-3">
-      <div class="card-header">
-        <h6 class="card-title mb-0">{% trans %}Community Details{% endtrans %}</h6>
-      </div>
-      <div class="card-body">
-        <h5 class="mb-3 font-weight-bold">
-            {% if community != None %}{{ community.name_with_prefix }}{% else %}f/new{% endif %}
-        </h5>
-        <div class="card-text" style="word-wrap:break-word;">
-          {% if community %}
-          <div class="mb-3">
-          <h6>{{ community.user_count }}</h6>
-          <span class="small">Subscribers</span>
-          </div>
-          {% endif %}
-
-          {% if community != None %}{{ community.description }}{% else %}The most active posts from all of Pnyx. Come here to see new posts rising and be a part of the conversation.{% endif %}
-        </div>
-        <br>
-
-        {% if community %}
-
-          {% if not community.current_user_subscribed %}
-          <a href="{{ url_for('community_subscribe', community=community.name) }}" class="btn btn-primary btn-block">{% trans %}Subscribe{% endtrans %}</a>
-          {% endif %}
-          <a href="{{ url_for('submit', community=community.name) }}" class="btn btn-success btn-block">{% trans %}Create Post{% endtrans %}</a>
-          {% else %}
-          <a href="{{ url_for('submit') }}" class="btn btn-success btn-block">{% trans %}Create Post{% endtrans %}</a>
-        {% endif %}
-        
-      </div>
-     </div>
-
-     <div class="card mb-3">
-      <div class="card-header">
-        <h6 class="card-title mb-0">{% trans %}Community Rules{% endtrans %}</h6>
-      </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">1.1. No hate</li>
-        <li class="list-group-item">2.2. Keep things SFW</li>
-        <li class="list-group-item">3.3. No Advertising</li>
-      </ul>
-      
-     </div>
-
-     {% include "side_footer.html" %}
-
-	</div>
 </div>
 {% endblock %}
 

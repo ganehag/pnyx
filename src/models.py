@@ -2,15 +2,15 @@
 
 import collections
 import datetime
-import re
 import os.path
-import time
 
 import hashlib
+import pytz
 
+from feedgen.feed import FeedGenerator
 from slugify import slugify
 
-from flask import Markup, current_app
+from flask import Markup, request
 from flask_login import current_user
 
 from itertools import islice
@@ -24,7 +24,6 @@ from playhouse.hybrid import hybrid_property
 from playhouse.postgres_ext import *
 
 from peewee import *
-import peewee
 
 db = FlaskDB()
 
@@ -78,7 +77,6 @@ class AnonymousUser():
 
 
 class User(db.Model):
-    email = CharField(unique=True)
     username = CharField(unique=True)
     password = CharField()
     karma = IntegerField(default=100)
@@ -188,7 +186,8 @@ class User(db.Model):
 class Community(db.Model):
     name = CharField(unique=True)
     description = CharField()
-    maintainer = ForeignKeyField(User, backref='community_maintainer')
+    maintainer = ForeignKeyField(User, backref='community_maintainer',
+                                 on_delete='SET NULL')
 
     search_content = TSVectorField()
 
@@ -205,6 +204,8 @@ class Community(db.Model):
 
     @hybrid_property
     def prefix_name(self):
+        if self.name in ["popular", "new", "upvote"]:
+            return fn.CONCAT("f/", self.name)
         return fn.CONCAT("c/", self.name)
 
     @property
@@ -222,7 +223,13 @@ class Community(db.Model):
         return '%.1f%s' % (num, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
 
     @property
+    def is_feed(self):
+        return self.name in ["popular", "new", "upvote"]
+
+    @property
     def name_with_prefix(self):
+        if self.name in ["popular", "new", "upvote"]:
+            return "f/" + self.name
         return "c/" + self.name
 
     @property
@@ -231,6 +238,38 @@ class Community(db.Model):
             CommunityUser.user_id == current_user.id,
             CommunityUser.community_id == self.id
         ) is not None
+
+    @property
+    def rss_feed(self):
+        fg = FeedGenerator()
+        fg.title(self.name)
+        fg.subtitle(self.description)
+        fg.link(href=request.base_url, rel='alternate')
+
+        # Should always end with .rss
+        base_url = request.base_url
+        if request.base_url.endswith('.rss'):
+            base_url = request.base_url[:-4]
+
+        postlimit = datetime.datetime.now() - datetime.timedelta(days=14)
+        posts = Proposal.from_community(self).where(
+                Proposal.modified > postlimit
+            ).order_by(Proposal.timestamp.desc())
+
+        for row in posts:
+            fe = fg.add_entry()
+            fe.guid("{}/{}".format(base_url, row.slug), True)
+            fe.title(row.title)
+            fe.link(href="{}/{}".format(base_url, row.slug))
+            fe.published(pytz.utc.localize(row.timestamp))
+            fe.updated(pytz.utc.localize(row.modified))
+            fe.content(row.html_content)
+            fe.author({
+                "name": row.author.username,
+                "email": row.author.username
+            }, True)
+
+        return fg.rss_str(pretty=True)
 
     @classmethod
     def search(cls, query):
@@ -262,7 +301,7 @@ class Community(db.Model):
 
 class CommunityUser(db.Model):
     community = ForeignKeyField(Community, backref='subscribers')
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='CASCADE')
 
     class Meta:
         indexes = (
@@ -272,7 +311,7 @@ class CommunityUser(db.Model):
 
 class PostHistory(db.Model):
     post = ForeignKeyField(Proposal)
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     timestamp = DateTimeField(default=datetime.datetime.now)
     content = TextField()
 
@@ -286,7 +325,7 @@ class Proposal(db.Model):
     community = ForeignKeyField(Community, backref='posts')
     title = CharField()
     slug = CharField(unique=True)
-    author = ForeignKeyField(User, backref='posts')
+    author = ForeignKeyField(User, backref='posts', on_delete='SET NULL')
     content = TextField()
     search_content = TSVectorField()
 
@@ -573,7 +612,7 @@ class Proposal(db.Model):
 
 class Comment(db.Model):
     post = ForeignKeyField(Proposal)
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     root = ForeignKeyField('self', backref='children', null=True, default=None)
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     score = IntegerField(default=0)
@@ -582,7 +621,7 @@ class Comment(db.Model):
 
 class CommentVote(db.Model):
     comment = ForeignKeyField(Comment)
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     vote = IntegerField(default=0)
 
@@ -594,7 +633,7 @@ class CommentVote(db.Model):
 
 class PostVote(db.Model):
     post = ForeignKeyField(Proposal)
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     vote = IntegerField(default=0)
 
@@ -606,7 +645,7 @@ class PostVote(db.Model):
 
 class PostInternalVote(db.Model):
     post = ForeignKeyField(Proposal)
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     timestamp = DateTimeField(default=datetime.datetime.now, index=True)
     vote = CharField()
 
@@ -617,7 +656,7 @@ class PostInternalVote(db.Model):
 
 
 class Moderator(db.Model):
-    user = ForeignKeyField(User)
+    user = ForeignKeyField(User, on_delete='SET NULL')
     community = ForeignKeyField(Community)
 
     class Meta:

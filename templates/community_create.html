@@ -6,86 +6,93 @@
 
 <style>
 html, body {
-    margin: 0;
-    min-height: 100vh;
-    background: #FFF;
+  margin: 0;
+  min-height: 100vh;
+  background: #FFF;
 }
 </style>
 
 <div class="container-fluid login-frame h-100">
-    <div class="row h-100">
-        <div class="panel-left col-2 col-sm-2 col-md-2 col-lg-1"></div>
+  <div class="row h-100">
+    <div class="panel-left col-2 col-sm-2 col-md-2 col-lg-1"></div>
 
-        <div class="my-auto pl-4 col-10 col-sm-6 col-md-5 col-lg-3">
-            <h5 class="mb-3">{% trans %}Create a new Community{% endtrans %}</h5>
+    <div class="my-auto pl-4 col-10 col-sm-6 col-md-5 col-lg-3">
+      <h5 class="mb-3">{% trans %}Create a new Community{% endtrans %}</h5>
 
-            {% if current_user.karma < 50 %}
+      {% if current_user.karma < 50 %}
 
-            <div class="alert alert-warning" role="alert">
-              {% trans %}You do not have enough karma to creating a new community. It will cost you{% endtrans %} <span class="font-weight-bold">50</span> {% trans %}karma{% endtrans %}.<br>
-              {% trans %}You currently have{% endtrans %}: <span class="font-weight-bold">{{ current_user.karma }}</span> {% trans %}karma{% endtrans %}.
-            </div>
+      <div class="alert alert-warning" role="alert">
+        {% trans %}You do not have enough karma to creating a new community. It will cost you{% endtrans %} <span class="font-weight-bold">50</span> {% trans %}karma{% endtrans %}.<br>
+        {% trans %}You currently have{% endtrans %}: <span class="font-weight-bold">{{ current_user.karma }}</span> {% trans %}karma{% endtrans %}.
+      </div>
 
-            <a class="btn btn-primary btn-block" href="{{ url_for('index') }}">{% trans %}Return{% endtrans %}</a>
+      <a class="btn btn-primary btn-block" href="{{ url_for('index') }}">{% trans %}Return{% endtrans %}</a>
 
-            {% else %}
+      {% else %}
 
-            <div class="alert alert-info" role="alert">
-              {% trans %}Creating a new community will cost you{% endtrans %} <span class="font-weight-bold">50</span> {% trans %}karma{% endtrans %}.<br>
-              {% trans %}You currently have{% endtrans %}: <span class="font-weight-bold">{{ current_user.karma }}</span> {% trans %}karma{% endtrans %}.
-            </div>
+      <div class="alert alert-light" role="alert">
+        {% trans %}Creating a new community will cost you{% endtrans %} <span class="font-weight-bold">50</span> {% trans %}karma{% endtrans %}.<br>
+        {% trans %}You currently have{% endtrans %}: <span class="font-weight-bold">{{ current_user.karma }}</span> {% trans %}karma{% endtrans %}.
+      </div>
 
-            {% with errors = get_flashed_messages(category_filter=["error"]) %}
-             {% if errors %}
-              {%- for msg in errors %}
-              <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ msg }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="{% trans %}Close{% endtrans %}">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              {% endfor -%}
-            {% endif %}
-            {% endwith %}
+      {% with errors = get_flashed_messages(category_filter=["error"]) %}
+      {% if errors %}
+      {%- for msg in errors %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="{% trans %}Close{% endtrans %}">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      {% endfor -%}
+      {% endif %}
+      {% endwith %}
 
-            <form id="create_community_form" action="{{ url_for('community_create') }}" method="POST" class="form-horizontal needs-validation" novalidate>
-                <input type=hidden value="{{ next or '' }}" name="next">
-                {{ form.csrf_token }}
-                <div class="form-group mb-3">
-                    <label class="form-control-label">{% trans %}Name{% endtrans %}</label>
-                    {{ form.name(class_="form-control", placeholder=_("Name")) }}
-                    <small class="form-text text-muted">{% trans %}Resulting URL{% endtrans %}: <span id="name-slug" style="font-weight: 500;"></span></small>
-                </div>
+      <form id="create_community_form" action="{{ url_for('community_create') }}" method="POST" class="form-horizontal needs-validation" novalidate>
+        <input type=hidden value="{{ next or '' }}" name="next">
+        {{ form.csrf_token }}
+        <div class="form-group mb-3">
+          <label class="form-control-label">{% trans %}Name{% endtrans %}</label>
+          {{ form.name(class_="form-control", placeholder=_("Name")) }}
+          <small class="form-text text-muted">{% trans %}Resulting URL{% endtrans %}: <span id="name-slug" style="font-weight: 500;"></span></small>
+        </div>
 
-                <div class="form-group mb-3">
-                    <label class="form-control-label">{% trans %}Description{% endtrans %}</label>
-                    {{ form.description(class_="form-control form-textarea", placeholder=_("Describe the new community")) }}
-                </div>
+        <div class="form-group mb-3">
+          <label class="form-control-label">{% trans %}Description{% endtrans %}</label>
+          {{ form.description(class_="form-control form-textarea", placeholder=_("Describe the new community")) }}
+        </div>
 
-                <div class="form-group mb-3">
-                    <label class="form-control-label">{% trans %}Tags (optional){% endtrans %}</label>
-                    {{ form.tags(class_="form-control form-textarea", placeholder=_("Tags")) }}
-                </div>
+        <div class="form-group mb-3">
+          <label class="form-control-label">{% trans %}Tags (optional){% endtrans %}</label>
+          {{ form.tags(class_="form-control form-textarea", placeholder=_("Tags")) }}
+        </div>
 
-                <div class="form-group mb-3">
-                    {% for error in form.recaptcha.errors %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ error }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                          <span aria-hidden="true">&times;</span>
-                        </button>
-                      </div>
-                    {% endfor %}
-                    {{ form.recaptcha }}
-                </div>
+        <div class="form-group mb-3">
+          {% for error in form.recaptcha.errors %}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          {% endfor %}
+          {{ form.recaptcha }}
+        </div>
 
-                <button class="btn btn-primary w-50" style="cursor: pointer;" type="submit">{% trans %}Create{% endtrans %}</button>
+        <div class="row">
+          <div class="col-md-6">
+            <button class="btn btn-success btn-block" style="cursor: pointer;" type="submit">{% trans %}Create{% endtrans %}</button>
+          </div>
+          <div class="col-md-6">
+            <a href="{{ url_for('user_page', user=current_user.username) }}" class="btn btn-light btn-block" style="cursor: pointer;">{% trans %}Cancel{% endtrans %}</a>
+          </div>
+        </div>
 
-            </form>
+      </form>
 
-            {% endif %}
-        </div>        
-    </div>
+      {% endif %}
+    </div>        
+  </div>
 </div>
 {% endblock %}
 
@@ -98,9 +105,9 @@ $(document).ready(function() {
 
     function validateForm() {
       return form.find('select, input[type=text], textarea')
-                 .not('.g-recaptcha-response')
-                 .filter(function() { return $(this).val() == ""; })
-                 .length == 0;
+      .not('.g-recaptcha-response')
+      .filter(function() { return $(this).val() == ""; })
+      .length == 0;
     }
 
     if (validateForm() === false) {
@@ -110,7 +117,7 @@ $(document).ready(function() {
     form.addClass('was-validated');
   });
 
-        
+  
 
   $('#name').on('keyup change', function(e) {
     var jqxhr = $.getJSON('{{ url_for('community_slug_generate') }}', {t: $(this).val()}, function(result) {

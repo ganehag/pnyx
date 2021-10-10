@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% if community %}
+{% block meta_description %}
+{{ community.name_with_prefix }}: {{ community.description }}
+{% endblock %}
+{% endif %}
+
+{% block title %}
+{% if community %}{{ community.name_with_prefix }}{% else %}f/new{% endif %}
+{% endblock %}
+
+{% block page_header %}
+<div class="container">
+  <h3 class="pt-3 pb-3 my-2">
+    <span class="semi-transparent">
+    {% if community and community.is_feed %}
+    <a class="text-primary" href="{{ url_for('feed', feed=community.name) }}">{{ community.name_with_prefix }}</a>
+    {% elif community %}
+    <a class="text-primary" href="{{ url_for('community', community=community.name) }}">{{ community.name_with_prefix }}</a>
+    {% else %}
+    <span class="text-primary">{% if community != None %}{{ community.name_with_prefix }}{% else %}f/new{% endif %}</span>
+    {% endif %}
+    </span>
+  </h3>
+</div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body pb-0 d-flex align-items-center">
+          {% if community.name_with_prefix.startswith('c') %}
+          <h5 class="card-title mb-0">
+            {% if community != None %}{{ community.name_with_prefix }}{% endif %}
+          </h5>
+          <a href="{{ url_for('community', community=community.name) }}.rss" class="ml-auto btn btn-warning">
+            <i class="fas fa-rss"></i>
+          </a>
+
+          {% if community and community.maintainer_id != None %}
+            {% if community.name_with_prefix.startswith('c') %}
+            <a href="{{ url_for('post_submit', community=community.name) }}" class="btn btn-success ml-2">{% trans %}Create Post{% endtrans %}</a>
+            {% endif %}
+          {% elif community.name_with_prefix.startswith('c') %}
+            <a href="{{ url_for('post_submit') }}" class="btn btn-success btn-sm ml-2">{% trans %}Create Post{% endtrans %}</a>
+          {% endif %}
+
+          {% else %}
+          <h6 class="card-title mb-0">
+            {% if community != None %}{{ community.name_with_prefix }}{% else %}f/new{% endif %}
+          </h6>
+          {% endif %}       
+        </div>
+        <div class="card-body">
+          <div class="card-text" style="word-wrap:break-word;">
+            {% if community != None %}
+              {{ community.description }}
+            {% else %}
+              {% trans %}The newest posts from all of Pnyx. Come here to see posts rising and be a part of the conversation.{% endtrans %}
+            {% endif %}
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-12">
+    {% include "includes/post-object-list.html" %}
+
+    {% include "includes/pagination.html" %}
+    </div>
+  </div>  
+</div>
+{% endblock %}
+

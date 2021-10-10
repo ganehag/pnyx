@@ -16,7 +16,7 @@
     </div>
 
     <h5 class="mb-0">
-      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
+      <a href="{{ url_for('post_details', slug=entry.slug, community=entry.community.name) }}" class="text-primary">
       {{ entry.title }}
       </a>
     </h5>
@@ -25,10 +25,13 @@
       <span class="font-weight-bold text-primary">{{ entry.community.name_with_prefix }}</span>
       • Posted by <a class="text-dark" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
       <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+      {% if entry.modified %}
+      | <span class="font-weight-bold">{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+      {% endif %}
     </h7>
 
     <div class="card-text">
-      <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
+      <a class="small text-dark" href="{{ url_for('post_details', slug=entry.slug, community=entry.community.name) }}#comments">
         <i class="fas fa-comment-alt"></i>
         {{ entry.comment_count }} Comments</a>
         {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}
@@ -47,7 +50,7 @@
 
 {% if entry.published %}
 
-<div class="card post-card mb-2">
+<div class="card shadow-sm post-card mb-2">
   <div class="card-body" style="margin-left: 40px;">
     <div class="float-left text-center" style="margin-left: -50px; width: 40px;">
         <div>
@@ -63,7 +66,7 @@
       {% if community == None %}
       <span class="card-text">
         <a href="{{ url_for('community', community=entry.community.name) }}">
-          c/{{ entry.community.name }}
+          {{ entry.community.name_with_prefix }}
         </a>
       </span>
       <span class="card-text text-primary">&nbsp;•&nbsp;</span>
@@ -72,13 +75,13 @@
         {% trans %}Posted by{% endtrans %} <a class="text-primary font-weight-bold" href="{{ url_for('user_page', user=entry.author.username) }}">{{ entry.author.username_with_prefix }}</a>
         <span class="timeago">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
         {% if entry.modified %}
-        | <span class="badge badge-info">{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
+        | <span>{% trans %}Modified{% endtrans%} <span class="timeago">{{ entry.modified.strftime('%Y-%m-%d %H:%M') }}</span></span>
         {% endif %}
       </span>
     </div>
 
     <h4 class="card-title" style="font-weight: 500;">
-      <a href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
+      <a href="{{ url_for('post_details', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
         {{ entry.title }}
       </a>
     </h4>
@@ -89,7 +92,7 @@
     </div>
 
     <div class="card-text">
-      <a class="small text-dark" href="{{ url_for('detail', slug=entry.slug, community=entry.community.name) }}#comments">
+      <a class="small text-dark" href="{{ url_for('post_details', slug=entry.slug, community=entry.community.name) }}#comments">
         <i class="fas fa-comment-alt"></i>
         {{ entry.comment_count }} Comments</a>
         {# &nbsp;&nbsp; <i class="fas fa-share"></i> Share #}

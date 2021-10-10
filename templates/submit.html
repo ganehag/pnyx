@@ -69,123 +69,107 @@
 
 {% block content %}
 <div class="container pt-3">
-<div class="row">
-  <div class="col-md-8">
-    {% if entry %}
-    <h5>{% trans %}Edit Post{% endtrans %}</h5>
-    {% else %}
-    <h5>{% trans %}Create a Post{% endtrans %}</h5>
-    {% endif %}
+  <div class="row">
+    <div class="col-12">
+      {% if entry %}
+      <h5>{% trans %}Edit Post{% endtrans %}</h5>
+      {% else %}
+      <h5>{% trans %}Create a Post{% endtrans %}</h5>
+      {% endif %}
 
-    {% if community %}
-    <form id="autocomplete" action="#" class="form-horizontal" method="post" data-id="{{ community.id }}">
-    {% else %}
-    <form id="autocomplete" action="#" class="form-horizontal" method="post">
-    {% endif %}
+      
+      <form id="autocomplete" action="#" class="form-horizontal" method="post" {% if community %}data-id="{{ community.id }}"{% endif %}>
+        <div class="form-group" style="position: relative;">
+            <select class="form-control" id="community-query" name="community-query" placeholder="Select a Community..." {% if entry and entry.slug %}disabled{% endif %}>
+              {% if community %}
+                <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
+              {% endif %}
+            </select>
+        </div>
+      </form>
 
-    <div class="form-group" style="position: relative;">
-        <select class="form-control" id="community-query" name="community-query" placeholder="Select a Community..." {% if entry and entry.slug %}disabled{% endif %}>
-          {% if community %}
-            <option value="{{ community.name_with_prefix }}" selected="selected">{{ community.name_with_prefix }}</option>
-          {% endif %}
-        </select>
-    </div>
-    </form>
+      {% if entry and entry.slug %}
+      <form id="new_post" action="{{ url_for('post_edit', slug=entry.slug) }}" class="form-horizontal" method="post" data-id="{{ community.id }}">
+      {% elif community %}
+      <form id="new_post" action="{{ url_for('post_submit', community=community.name) }}" class="form-horizontal" method="post" data-id="{{ community.id }}">
+      {% else %}
+      <form id="new_post" action="{{ url_for('post_submit') }}" class="form-horizontal" method="post">
+      {% endif %}
 
-    {% if entry and entry.slug %}
-    <form id="new_post" action="{{ url_for('post_edit', slug=entry.slug) }}" class="form-horizontal" method="post" data-id="{{ community.id }}">
-    {% elif community %}
-    <form id="new_post" action="{{ url_for('submit', community=community.name) }}" class="form-horizontal" method="post" data-id="{{ community.id }}">
-    {% else %}
-    <form id="new_post" action="{{ url_for('submit') }}" class="form-horizontal" method="post">
-    {% endif %}
-
-    {% with errors = get_flashed_messages(category_filter=["error"]) %}
-     {% if errors %}
-      {%- for msg in errors %}
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ msg }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      {% endfor -%}
-    {% endif %}
-    {% endwith %}
-
-
-    <div class="card mb-3">
-      <div class="card-body">
-          <input type="hidden" id="community" name="community" value="{{ community.name }}">
-          {% if entry and entry.slug %}
-          <input type="hidden" name="title" value="{{ entry.title }}">
-          {% endif %}
-
-          <div class="form-group">
-            <input class="form-control" {% if not (entry and entry.slug) %}id="title" name="title"{% endif %} type="text" value="{{ entry.title }}" placeholder="Title" {% if entry and entry.slug %}disabled{% endif %}>
+      {% with errors = get_flashed_messages(category_filter=["error"]) %}
+        {% if errors %}
+          {%- for msg in errors %}
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
+          {% endfor -%}
+        {% endif %}
+      {% endwith %}
 
-          <div class="form-group">
-            <textarea class="form-control" id="content" name="content" style="height: 300px;" placeholder="Text (optional)">{{ entry.content }}</textarea>
-          </div>
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <input type="hidden" id="community" name="community" value="{{ community.name }}">
+            {% if entry and entry.slug %}
+            <input type="hidden" name="title" value="{{ entry.title }}">
+            {% endif %}
 
-          <div class="form-group">
-            <div class="custom-control custom-checkbox">
-              <input class="custom-control-input" type="checkbox" value="" id="use-internal-vote" {% if entry.vote_options %}checked="checked"{% endif %}>
-              <label class="custom-control-label" for="use-internal-vote">
-                {% trans %}Add voting{% endtrans %}
-              </label>
+            <div class="form-group">
+              <input class="form-control" {% if not (entry and entry.slug) %}id="title" name="title"{% endif %} type="text" value="{{ entry.title }}" placeholder="Title" {% if entry and entry.slug %}disabled{% endif %}>
             </div>
-          </div>
 
-          <div class="form-group">
-            <div class="custom-control custom-checkbox">
-              <input class="custom-control-input" type="checkbox" value="" name="use-positions" id="use-positions" {% if entry.usepositions %}checked="checked"{% endif %}>
-              <label class="custom-control-label" for="use-positions">
-                {% trans %}Use comments as positions{% endtrans %}
-              </label>
+            <div class="form-group">
+              <textarea class="form-control" id="content" name="content" style="height: 300px;" placeholder="Text (optional)">{{ entry.content }}</textarea>
             </div>
-          </div>
 
-          <div id="intVoteTaWrapper" class="d-none">
-            <hr>
-            <small id="intVoteHelp" class="form-text text-muted text-right">{% trans %}One option on each line.{% endtrans %}</small>
-            <div class="form-group mb-0" style="height: 150px;">
-              <textarea class="form-control" id="internalvote" name="internalvote" disabled="disabled">{{ entry.vote_options }}</textarea>
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input class="custom-control-input" type="checkbox" value="" id="use-internal-vote" {% if entry.vote_options %}checked="checked"{% endif %}>
+                <label class="custom-control-label" for="use-internal-vote">
+                  {% trans %}Add voting{% endtrans %}
+                </label>
+              </div>
             </div>
-            <small class="form-text text-danger text-right">{% trans %}Any future change to any of these lines will reset all the voting results for this post.{% endtrans %}</small>
-          </div>
 
-          <div class="form-group mt-5">
-            <button class="btn btn-primary" type="submit">{% trans %}Publish{% endtrans %}</button>
-          </div>
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input class="custom-control-input" type="checkbox" value="" name="use-positions" id="use-positions" {% if entry.usepositions %}checked="checked"{% endif %}>
+                <!--
+                <label class="custom-control-label" for="use-positions">
+                  {% trans %}Use comments as positions{% endtrans %}
+                </label>
+                -->
+              </div>
+            </div>
 
+            <div id="intVoteTaWrapper" class="d-none">
+              <hr>
+              <small id="intVoteHelp" class="form-text text-muted text-right">{% trans %}One option on each line.{% endtrans %}</small>
+              <div class="form-group mb-0" style="height: 150px;">
+                <textarea class="form-control" id="internalvote" name="internalvote" disabled="disabled">{{ entry.vote_options }}</textarea>
+              </div>
+              <small class="form-text text-danger text-right">{% trans %}Any future change to any of these lines will reset all the voting results for this post.{% endtrans %}</small>
+            </div>
+
+            <div class="form-group mt-5">
+              <button class="btn btn-primary" type="submit">{% trans %}Publish{% endtrans %}</button>
+              {% if entry.slug %}
+              <a href="{{ url_for('post_details', community=community.name, slug=entry.slug) }}" class="btn btn-danger">{% trans %}Cancel{% endtrans %}</a>
+              {% endif %}
+            </div>
+
+        </div>
       </div>
-    </div>
 
-    </form>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card mb-3">
-      <div class="card-header">
-        <h6 class="card-title mb-0">Pnyx Rules</h6>
-      </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item">1. Remember the human</li>
-        <li class="list-group-item">2. Behave like you would in real life</li>
-        <li class="list-group-item">3. Look for the original source of content</li>
-        <li class="list-group-item">4. Search for duplicates before posting</li>
-        <li class="list-group-item">5. Read the community’s rules</li>
-      </ul>
+      </form>
     </div>
   </div>
-</div>
 </div>
 {% endblock %}
 
 {% block js %}
-
 $(document).ready(function() {
   let updateLineNo = function(txta, element) {
       var lines = txta.val().split('\n').length,

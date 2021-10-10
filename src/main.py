@@ -4,42 +4,37 @@
 import difflib
 import os
 import os.path
-import json
 import logging
 import logging.config
 import sys
 import re
 import hashlib
-import math
 import datetime
 import random
-import time
 import yaml
 
 from itertools import groupby
 
-from urllib.parse import urlparse, urljoin, urlencode
+from urllib.parse import urlencode
 
-from flask import (Flask, abort, flash, Markup, redirect, render_template,
-                   request, Response, session, url_for, jsonify, current_app)
+from flask import (Flask, abort, flash, redirect, render_template,
+                   request, url_for, jsonify, make_response, current_app)
 from flask_assets import Environment, Bundle
 from flask_login import (
     LoginManager, current_user,
     login_required, login_user, logout_user
 )
-from flask_babel import Babel, gettext, ngettext
+from flask_babel import Babel, gettext
 from flask_caching import Cache
 from flask_compress import Compress
 
-from jinja2 import evalcontextfilter, Markup, escape
+from jinja2 import pass_eval_context, Markup
 
-from form import (LoginForm, RegisterForm, CommunityCreateForm,
-                  Select2MultipleField)
+from form import (LoginForm, RegisterForm, CommunityCreateForm)
 
 import peewee
 
-from playhouse.flask_utils import FlaskDB, get_object_or_404, object_list
-from playhouse.shortcuts import model_to_dict, dict_to_model
+from playhouse.flask_utils import get_object_or_404, object_list
 
 from models import (Comment, AnonymousUser, User, Community, CommunityUser,
                     Proposal, CommentVote, PostVote, Moderator, Tag,
@@ -127,7 +122,7 @@ def submit_comment():
 
     if not(content and slug and user):
         flash('Missing content or reference to Post')
-        return redirect(url_for('index'))
+        return redirect(url_for('feed', feed='new'))
 
     else:
         comment.post = Proposal.get(Proposal.slug == slug)
@@ -136,7 +131,7 @@ def submit_comment():
                 Comment.get(Comment.id == root).post == comment.post):
             flash('Invalid comment reference')
             return redirect(
-                url_for('detail',
+                url_for('post_details',
                         slug=slug,
                         community=comment.post.community.name))
         else:
@@ -148,17 +143,17 @@ def submit_comment():
                 with database.atomic():
                     comment.save()
 
-            except peewee.IntegrityError as e:
+            except peewee.IntegrityError:
                 flash('Unable to save comment', 'error')
 
             else:
                 return redirect(
-                    url_for('detail',
+                    url_for('post_details',
                             slug=slug,
                             community=comment.post.community.name))
 
     return redirect(
-        url_for('detail', slug=slug, community=comment.post.community))
+        url_for('post_details', slug=slug, community=comment.post.community))
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -166,7 +161,7 @@ def submit_comment():
 @app.route('/u/<user>/submit', methods=['GET', 'POST'])
 @cache.cached(timeout=50)
 @login_required
-def submit(user=None, community=None):
+def post_submit(user=None, community=None):
     entry = Proposal(community='', title='', content='')
 
     if community is None:
@@ -198,13 +193,13 @@ def submit(user=None, community=None):
                     with database.atomic():
                         entry.save()
 
-                except peewee.IntegrityError as e:
+                except peewee.IntegrityError:
                     flash('This title is already in use.', 'error')
                 else:
 
                     if entry.published:
                         return redirect(
-                            url_for('detail',
+                            url_for('post_details',
                                     community=entry.community.name,
                                     slug=entry.slug))
                     else:
@@ -257,7 +252,8 @@ def post_edit(slug):
             entry.save()
 
         return redirect(
-            url_for('detail', slug=entry.slug, community=entry.community.name))
+            url_for('post_details',
+                    slug=entry.slug, community=entry.community.name))
 
     return render_template('submit.html',
                            entry=entry, community=entry.community)
@@ -275,10 +271,30 @@ def user_page(user):
         check_bounds=False)
 
 
+@app.route('/u/<user>', methods=["DELETE"])
+def user_delete(user):
+    u = get_object_or_404(User, User.username == user)
+
+    print(u.delete_instance())
+
+    return "", 200
+
+
 @app.route('/u/<user>/karma', methods=['GET'])
 def user_karma(user):
     u = get_object_or_404(User, User.username == user)
     return str(u.karma_count), 200
+
+
+@app.route('/u/<user>/delete', methods=['GET'])
+def user_delete_verify(user):
+    u = get_object_or_404(User, User.username == user)
+
+    if u.id != current_user.id:
+        return render_template('403.html'), 403
+
+    return render_template(
+        'user_delete_verify.html', user=u)
 
 
 @app.route('/u/subscribe/<community>', methods=['GET'])
@@ -308,21 +324,30 @@ def community_subscribe(community):
 @cache.cached(timeout=50)
 def community(community):
     community_ref = Community.get_or_none(Community.name == community)
-    return object_list('index.html',
+    return object_list('community.html',
                        Proposal.from_community(community_ref).order_by(
                           Proposal.timestamp.desc()),
                        community=community_ref,
                        check_bounds=False)
 
 
+@app.route('/c/<community>.rss', methods=["GET"])
+@cache.cached(timeout=50)
+def community_rss(community):
+    community_ref = Community.get_or_none(Community.name == community)
+    response = make_response(community_ref.rss_feed)
+    response.headers['Content-Type'] = 'application/rss+xml; charset=utf-8'
+    return response
+
+
 @app.route('/c/<community>/<slug>')
 @cache.cached(timeout=50)
-def detail(community, slug):
+def post_details(community, slug):
     query = Proposal.public()
     community_id = Community.get_or_none(Community.name == community)
     entry = get_object_or_404(query, Proposal.slug == slug,
                               Proposal.community == community_id)
-    return render_template('detail.html', entry=entry, community=community_id)
+    return render_template('post.html', entry=entry, community=community_id)
 
 
 @app.route('/c/<community>/<slug>/revisions')
@@ -370,7 +395,7 @@ def community_create():
         try:
             community.save()
 
-        except peewee.IntegrityError as e:
+        except peewee.IntegrityError:
             flash(gettext('This name is already in use.'), 'error')
             success = False
 
@@ -386,7 +411,7 @@ def community_create():
                     tag.community = community
                     tag.save()
 
-            except peewee.IntegrityError as e:
+            except peewee.IntegrityError:
                 flash(gettext('Unable to add tags.'), 'error')
                 success = False
 
@@ -449,7 +474,7 @@ def community_search():
 @login_required
 @database.atomic()
 def proposal_intvote(slug):
-    vote = content = request.form.get('vote') or None
+    vote = request.form.get('vote') or None
     if not vote:
         return jsonify({"error": "invalid vote parameter"}), 400
 
@@ -458,11 +483,11 @@ def proposal_intvote(slug):
     if vote == '':  # Pull vote
         PostInternalVote.delete().where(
             PostInternalVote.user_id == current_user.id and
-            PostInternalVote.post == post
+            PostInternalVote.post == prop.id
         ).execute()
 
     else:
-        rowid = (PostInternalVote.insert(
+        (PostInternalVote.insert(
             post=prop, user=current_user.id, vote=vote
         ).on_conflict(
             conflict_target=[PostInternalVote.user, PostInternalVote.post],
@@ -487,9 +512,9 @@ def proposal_upvote(slug):
         prop.upvotes -= 1
         # current_user.karma += 1
         prop.author.karma -= 1  # Not so sure about this...
-        rowcount = PostVote.delete().where(
-                (PostVote.post == prop) & (PostVote.user_id == current_user.id)
-            ).execute()
+        PostVote.delete().where(
+            (PostVote.post == prop) & (PostVote.user_id == current_user.id)
+        ).execute()
         result["diff"] = '-1'
     else:
         score_mod = 1
@@ -501,7 +526,7 @@ def proposal_upvote(slug):
         # current_user.karma -= 1
         prop.author.karma += 1
 
-        rowid = (PostVote.insert(
+        (PostVote.insert(
             post=prop, user=current_user.id, vote=1
         ).on_conflict(
             conflict_target=[PostVote.user, PostVote.post],
@@ -509,6 +534,7 @@ def proposal_upvote(slug):
         ).execute())
 
     Proposal.save(prop)
+    
     # FIXME move karma to another table
     User.save(prop.author)
     User.save(current_user)
@@ -533,7 +559,7 @@ def proposal_downvote(slug):
         # current_user.karma += 1
         prop.author.karma += 1
         prop.downvotes -= 1
-        rowcount = PostVote.delete().where(
+        PostVote.delete().where(
             (PostVote.post == prop) & (PostVote.user_id == current_user.id)
         ).execute()
         result["diff"] = '+1'
@@ -547,7 +573,7 @@ def proposal_downvote(slug):
         result["diff"] = str(-score_mod)
         prop.downvotes += score_mod
 
-        rowid = (PostVote.insert(
+        (PostVote.insert(
             post=prop, user=current_user.id, vote=-1
         ).on_conflict(
             conflict_target=[PostVote.user, PostVote.post],
@@ -555,6 +581,7 @@ def proposal_downvote(slug):
         ).execute())
 
     Proposal.save(prop)
+
     # FIXME move karma to another table
     User.save(current_user)
     User.save(prop.author)
@@ -580,7 +607,7 @@ def comment_upvote(slug, comment_id):
     if current_user.has_upvoted(comment):
         # current_user.karma += 1
         comment.score -= 1
-        rowcount = CommentVote.delete().where(
+        CommentVote.delete().where(
             (CommentVote.comment == comment) &
             (CommentVote.user_id == current_user.id)
         ).execute()
@@ -595,7 +622,7 @@ def comment_upvote(slug, comment_id):
 
         result["diff"] = '+' + str(score_mod)
 
-        rowid = (CommentVote.insert(
+        (CommentVote.insert(
             comment=comment, user=current_user.id, vote=1
         ).on_conflict(
             conflict_target=[CommentVote.user, CommentVote.comment],
@@ -627,7 +654,7 @@ def comment_downvote(slug, comment_id):
     if current_user.has_downvoted(comment):
         comment.score += 1
         # current_user.karma += 1
-        rowcount = CommentVote.delete().where(
+        CommentVote.delete().where(
             (CommentVote.comment == comment) &
             (CommentVote.user_id == current_user.id)
         ).execute()
@@ -641,7 +668,7 @@ def comment_downvote(slug, comment_id):
         comment.score -= score_mod
         # current_user.karma -= 1
 
-        rowid = (CommentVote.insert(
+        (CommentVote.insert(
             comment=comment, user=current_user.id, vote=-1
         ).on_conflict(
             conflict_target=[CommentVote.user, CommentVote.comment],
@@ -683,7 +710,7 @@ def comment_blankvote(slug, comment_id):
 
     Comment.save(comment)
 
-    rowid = (CommentVote.insert(
+    (CommentVote.insert(
         comment=comment, user=current_user.id, vote=0
     ).on_conflict(
         conflict_target=[CommentVote.user, CommentVote.comment],
@@ -818,29 +845,37 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('feed', feed='new'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
 
-    if form.validate_on_submit():
-        user = User()
-        user.email = form.email.data
-        user.username = form.username.data
-        user.password = hashlib.sha384(form.password.data.encode()).hexdigest()
-
-        try:
-            with database.atomic():
-                user.save()
-
-        except peewee.IntegrityError as e:
-            flash('This username/email is already in use.', 'error')
+    if form.is_submitted():
+        if not form.validate():
+            for key, items in form.errors.items():
+                for err in items:
+                    flash(err, 'error')
 
         else:
-            login_user(user)
-            return form.redirect('index')
+            user = User()
+            user.username = form.username.data
+            user.password = hashlib.sha384(
+                form.password.data.encode()).hexdigest()
+
+            print(user)
+
+            try:
+                with database.atomic():
+                    user.save()
+
+            except peewee.IntegrityError:
+                flash('This username is already in use.', 'error')
+
+            else:
+                login_user(user)
+                return redirect(url_for('user_page', user=user.username))
 
     return render_template('register.html', form=form)
 
@@ -849,39 +884,37 @@ def register():
 # Misc
 #
 
-@app.route('/f/upvote')
-@app.route('/f/popular')
-@app.route('/f/new')
-def index():
+@app.route('/f/<feed>')
+def feed(feed):
     query = Proposal.public()
 
     # FIXME: better sorting
 
     community = None
 
-    if request.path == "/f/popular":
+    if feed == "popular":
         query = query.order_by(-Proposal.ranking)
         community = Community(name="popular",
                               description="The most popular posts on Pnyx.")
 
-    elif request.path == "/f/upvote":
+    elif feed == "upvote":
         query = query.order_by(-(Proposal.upvotes - Proposal.downvotes))
         community = Community(name="upvote",
                               description="The most upvoted posts on Pnyx.")
 
-    elif request.path == "/f/new":
+    elif feed == "new":
         query = query.order_by(Proposal.timestamp.desc())
         community = Community(name="new",
                               description=gettext(
                                 "The newest posts from all of Pnyx. Come here "
                                 "to see posts rising and be a part of "
-                                "the conversation.."))
+                                "the conversation."))
 
     else:
         query = query.order_by(-Proposal.ranking, Proposal.timestamp.desc())
 
     return object_list(
-        'index.html',
+        'community.html',
         query,
         community=community,
         check_bounds=False)
@@ -1003,7 +1036,7 @@ def not_found(exc):
 
 
 @app.template_filter()
-@evalcontextfilter
+@pass_eval_context
 def nl2br(eval_ctx, value):
     result = "<br>\n".join(value.splitlines())
     if eval_ctx.autoescape:
@@ -1012,7 +1045,7 @@ def nl2br(eval_ctx, value):
 
 
 @app.template_filter()
-@evalcontextfilter
+@pass_eval_context
 def htmldiff(eval_ctx, a, b):
     a = a.splitlines()
     b = b.splitlines()
@@ -1077,4 +1110,4 @@ if __name__ == '__main__':
             for item in site_map():
                 print(item)
     else:
-        app.run(host='0.0.0.0', port=8080, debug=True, threaded=True)
+        app.run(host='0.0.0.0', port=8780, debug=True, threaded=True)

@@ -26,24 +26,24 @@
         <div class="container-fluid">
           <div class="row">
             <ul class="list-group list-group-flush w-100">
-            {% for entry in communitys %}
-            <li class="list-group-item"> 
-              <div class="row">
-                <div class="col-4 col-md-3">
-                  <span class="font-weight-bold"><a href="{{ url_for('community', community=entry.name) }}">{{ entry.name_with_prefix }}</a></span><br>
-                  <span class="small">{{ entry.user_count }} Subscribers</span>
+              {% for entry in communitys %}
+              <li class="list-group-item"> 
+                <div class="row">
+                  <div class="col-4 col-md-3">
+                    <span class="font-weight-bold"><a href="{{ url_for('community', community=entry.name) }}">{{ entry.name_with_prefix }}</a></span><br>
+                    <span class="small">{{ entry.user_count }} Subscribers</span>
+                  </div>
+                  <div class="col-8 col-md-6 mb-2">
+                    <span class="small">{{ entry.description }}</span>
+                  </div>
+                  <div class="col-12 col-md-3">
+                    {% if not entry.current_user_subscribed %}
+                    <a href="{{ url_for('community_subscribe', community=entry.name) }}" class="btn btn-primary btn-block">Subscribe</a>
+                    {% endif %}
+                  </div>
                 </div>
-                <div class="col-8 col-md-6 mb-2">
-                  <span class="small">{{ entry.description }}</span>
-                </div>
-                <div class="col-12 col-md-3">
-                  {% if not entry.current_user_subscribed %}
-                  <a href="{{ url_for('community_subscribe', community=entry.name) }}" class="btn btn-primary btn-block">Subscribe</a>
-                  {% endif %}
-                </div>
-              </div>
-            </li>
-            {% endfor %}
+              </li>
+              {% endfor %}
             </ul>
           </div>
         </div>
@@ -53,9 +53,6 @@
         {% include "includes/post-object-list.html" %}
       </div>
       {% include "includes/pagination.html" %}
-    </div>
-    <div class="col-lg-4 lonely-column">
-      {% include "side_footer.html" %}
     </div>
   </div>
 

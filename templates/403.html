@@ -5,16 +5,14 @@
 {% block page_header %}
 <div class="container">
   <h2 class="pt-3 pb-3">
-  	Page not found
+  	{% trans %}Ooops!{% endtrans %}
   </h2>
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="container text-center">
-  
-  <h4>page not found</h4>
-  <h6>the page you requested does not exist</h6>
-
+  <h4>{% trans %}Permission denied.{% endtrans %}</h4>
+  <h6>{% trans %}You do not have permission to view this page.{% endtrans %}</h6>
 </div>
 {% endblock %}

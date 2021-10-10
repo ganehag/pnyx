@@ -16,15 +16,15 @@
 <div class="container">
     <div class="row">
         <div class="col-lg">
-            <div class="card mb-3">
+            <div class="card shadow-sm mb-3">
             {% include "includes/post-object-list.html" %}
             </div>
 
             {% include "includes/pagination.html" %}
         </div>
         <div class="col-lg-4 lonely-column">
-            <div class="card mb-3">
-                <div class="card-header user-info-card">
+            <div class="card shadow-sm mb-3">
+                <div class="card-body user-info-card">
                     <div class="user-profile-pic bg-info text-center">
                         <i class="fas fa-user-astronaut text-white fa-3x"></i>
                     </div>
@@ -47,16 +47,18 @@
                     </div>
                     {% if user.username == current_user.username %}
                     <div class="mt-4">
-                        <button class="btn btn-primary btn-block" type="button">{% trans %}New Post{% endtrans %}</button>
+                        <a href="{{ url_for('post_submit') }}" class="btn btn-success btn-block">{% trans %}New Post{% endtrans %}</a>
                     </div>
                     {% endif %}
                 </div>
             </div>
 
             {% if user.username == current_user.username %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    My Subscriptions
+
+            {#
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    {% trans %}My Subscriptions{% endtrans %}
                 </div>
                 <ul class="list-group list-group-flush">
                     {% for subs in user.subscriptions %}
@@ -66,10 +68,11 @@
                     {% endfor %}
                 </ul>
             </div>
+            #}
 
-            <div class="card mb-3">
-                <div class="card-header">
-                    My Communities
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    {% trans %}My Communities{% endtrans %}
                 </div>
                 <ul class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
                     {% for commune in user.community_maintainer|sort(attribute='name') %}
@@ -79,7 +82,16 @@
                     {% endfor %}
                 </ul>
                 <div class="card-body">
-                    <a href="{{ url_for('community_create') }}" class="btn btn-success btn-block"">{% trans %}Create a Community{% endtrans %}</a>
+                    <a href="{{ url_for('community_create') }}" class="btn btn-success btn-block">{% trans %}Create a Community{% endtrans %}</a>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    {% trans %}My Account{% endtrans %}
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('user_delete_verify', user=user.username) }}" class="btn btn-danger btn-block">{% trans %}Delete Account{% endtrans %}</a>
                 </div>
             </div>
             {% endif %}

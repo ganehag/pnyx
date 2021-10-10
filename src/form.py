@@ -60,7 +60,11 @@ class LoginForm(RedirectForm):
 class RegisterForm(RedirectForm):
     email = StringField('email')
     username = StringField('username')
-    password = PasswordField('password')
+    password = PasswordField('password', [
+        validators.Required(),
+        validators.EqualTo('confirm', message='Passwords must match')
+    ])
+    confirm = PasswordField('repeat_password')
     submit = SubmitField('submit')
     recaptcha = RecaptchaField()
 

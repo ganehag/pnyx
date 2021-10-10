@@ -1,12 +1,12 @@
 <ul class="comment" style="position: relative;">
-<li class="mb-4">
-    <div class="card-text">
-        {{ reply.content }}
-    </div>
-    <div class="comment-toolbar mt-3">
-        <button data-url="{{ url_for('comment_upvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-success">{% trans %}Agree{% endtrans %}</button>
-        <button data-url="{{ url_for('comment_downvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-danger">{% trans %}Disagree{% endtrans %}</button>
-        <button data-url="{{ url_for('comment_blankvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-white">{% trans %}No opinion{% endtrans %}</button>
-    </div>
-</li>
+    <li class="mb-4">
+        <div class="card-text">
+            {{ reply.content }}
+        </div>
+        <div class="comment-toolbar mt-3">
+            <button data-url="{{ url_for('comment_upvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-success">{% trans %}Agree{% endtrans %}</button>
+            <button data-url="{{ url_for('comment_downvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-danger">{% trans %}Disagree{% endtrans %}</button>
+            <button data-url="{{ url_for('comment_blankvote', slug=entry.slug, comment_id=reply.id) }}" class="btn btn-sm btn-white">{% trans %}No opinion{% endtrans %}</button>
+        </div>
+    </li>
 </ul>

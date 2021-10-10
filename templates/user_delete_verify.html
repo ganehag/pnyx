@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }} ({{user.username_with_prefix}}){% endblock %}
+
+{% block page_header %}
+<div class="container">
+    <h3 class="pt-3 pb-3 my-2">
+        <span class="semi-transparent">
+            <a class="text-primary" href="{{ url_for('user_page', user=user.username) }}">{{ user.username_with_prefix }}</a>
+        </span>
+    </h3>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            {% if user.username == current_user.username %}
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h4 class="text-header mb-4">
+                        {% trans %}My Account{% endtrans %}
+                    </h4>
+                    <p class="mb-5">
+                        <strong>{% trans %}Deleting your account can not be undone!{% endtrans %}</strong>
+                    </p>
+                    <a id="yes-delete-my-account-btn" href="#" class="btn btn-danger btn-block">{% trans %}Yes I understand. Delete my account!{% endtrans %}</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}{# <script> #}
+{{ super() }}
+$('#yes-delete-my-account-btn').click(function(e) {
+    $.ajax({
+        method: "DELETE",
+        url: "{{ url_for('user_delete', user=user.username) }}",
+    })
+    .done(function(e) {
+
+    })
+    .fail(function() {
+
+    })
+    .always(function() {
+        window.location.href = "{{ url_for('feed', feed='new') }}";
+    });
+});
+{% endblock %}
