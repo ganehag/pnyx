@@ -274,10 +274,8 @@ def user_page(user):
 @app.route('/u/<user>', methods=["DELETE"])
 def user_delete(user):
     u = get_object_or_404(User, User.username == user)
-
-    print(u.delete_instance())
-
-    return "", 200
+    u.delete_instance()
+    return "", 204
 
 
 @app.route('/u/<user>/karma', methods=['GET'])
