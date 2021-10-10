@@ -253,7 +253,7 @@ class Community(db.Model):
 
         postlimit = datetime.datetime.now() - datetime.timedelta(days=14)
         posts = Proposal.from_community(self).where(
-                Proposal.modified > postlimit
+                Proposal.timestamp > postlimit
             ).order_by(Proposal.timestamp.desc())
 
         for row in posts:
