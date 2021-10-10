@@ -26,7 +26,7 @@ html, body {
         {% trans %}You currently have{% endtrans %}: <span class="font-weight-bold">{{ current_user.karma }}</span> {% trans %}karma{% endtrans %}.
       </div>
 
-      <a class="btn btn-primary btn-block" href="{{ url_for('index') }}">{% trans %}Return{% endtrans %}</a>
+      <a class="btn btn-primary btn-block" href="{{ url_for('user_page', user=current_user.username) }}">{% trans %}Return{% endtrans %}</a>
 
       {% else %}
 
