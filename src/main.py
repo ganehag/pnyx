@@ -861,8 +861,7 @@ def register():
             user.username = form.username.data
             user.password = hashlib.sha384(
                 form.password.data.encode()).hexdigest()
-
-            print(user)
+            user.karma = 0
 
             try:
                 with database.atomic():
