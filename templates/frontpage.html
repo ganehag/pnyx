@@ -25,42 +25,31 @@
 {% block content %}
 <div class="container">
   <div class="row">
-    <div class="col-md-6">
-      <h6 class="mr-3 float-right">{% trans %}Posts{% endtrans %}</h6>
-      <h6 class="ml-3">{% trans %}Category{% endtrans %}</h6>
+    <div class="col-lg-12">
 
-      {% for cat in categories %}
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="float-right">{{ cat.total_post_count }}</div>
-          <h5>#{{ cat.title }}</h5>
+      <div class="card shadow-sm mb-4">
+        <div class="card-body pb-0 d-flex align-items-center">
           
-          {% for item in cat.communities %}
-          <div class="d-inline-block">
-            <span class="d-inline-block" style="width: 12px; height: 12px; background: {{ item.color }};"></span>
-            <span class="mr-2"><a href="{{ url_for('community', community=item.community_name) }}">{{ item.community_name }}</a></span>
+          <h6 class="card-title mb-0">
+            {% trans %}f/frontpage{% endtrans %}
+          </h6>
+                 
+        </div>
+        <div class="card-body">
+          <div class="card-text" style="word-wrap:break-word;">
+            {% trans %}Welcome!{% endtrans %}
           </div>
-          {% endfor %}
+          
         </div>
       </div>
-      {% endfor %}
-    </div>
-    <div class="col-md-6">
-      <h6 class="ml-3">{% trans %}Latest{% endtrans %}</h6>
-      <div class="card shadow-sm mb-3">
-        <ul class="list-group list-group-flush w-100">
-          {% for entry in posts %}
-          <li class="list-group-item"> 
-          <h6><a href="{{ url_for('post_details', community=entry.community_name, slug=entry.slug)}}">{{ entry.title }}</a></h6>
-          <div class="d-inline-block">
-            <span class="d-inline-block" style="width: 12px; height: 12px; background: {{ entry.color }};"></span>
-            <span class="mr-2"><a href="{{ url_for('community', community=entry.community_name) }}">{{ entry.community_name }}</a></span>
-          </div>
-          <span class="timeago float-right small">{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
+
+      <h4 class="ml-3">
+        
+      </h4>
+
+      {% include "includes/post-object-list.html" %}
+
+      {% include "includes/pagination.html" %}
     </div>
   </div>  
 </div>

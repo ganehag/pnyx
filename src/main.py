@@ -919,49 +919,18 @@ def feed(feed):
 
 @app.route('/')
 def frontpage():
-    result = []
-    for key, grp in groupby(Tag.communities(), key=lambda x: x.tag_title):
-        grp = sorted(list(grp), key=lambda x: x.tag_title)[:50]
-
-        for i in grp:
-            i.color = Community.rgbcolor(i.community_name.encode())
-
-        post_count = sum([x.post_count for x in grp])
-
-        result.append({
-            "title": key,
-            "count": len(grp),
-            "communities": grp,
-            "total_post_count": post_count
-        })
-
-    result = sorted(result, key=lambda x: x['count'], reverse=True)
-
-    posts = (Proposal.select(
-            Proposal.title,
-            Proposal.slug,
-            Proposal.author,
-            Proposal.timestamp,
-            Community.name.alias('communityname'))
-        .join(Community)
+    posts = (
+        Proposal.all()
         .where(Proposal.published == True)
         .order_by(Proposal.timestamp.desc())
-        .limit(20))
+        .limit(20)
+    )
 
-    pres = []
-    for x in posts.objects():
-        pres.append({
-            "title": x.title,
-            "slug": x.slug,
-            "author": x.author,
-            "timestamp": x.timestamp,
-            "community_name": x.communityname,
-            "color": Community.rgbcolor(x.communityname.encode())
-        })
-
-    return render_template('frontpage.html',
-                           categories=result,
-                           posts=pres)
+    return object_list(
+        'frontpage.html',
+        posts,
+        check_bounds=False,
+        paginate_by=50)
 
 
 @app.route('/search')

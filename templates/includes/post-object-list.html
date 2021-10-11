@@ -62,13 +62,13 @@
         </div>
     </div>
 
-    <h4 class="card-title mb-0">
+    <h5 class="card-title mb-1">
       <a href="{{ url_for('post_details', slug=entry.slug, community=entry.community.name) }}" class="text-dark">
         {{ entry.title }}
       </a>
-    </h4>
+    </h5>
 
-    <section>
+    <section class="mb-1">
       {% if community == None %}
       <span class="card-text">
         <a href="{{ url_for('community', community=entry.community.name) }}">
