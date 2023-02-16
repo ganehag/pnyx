@@ -18,7 +18,7 @@ pyaml==20.4.0
 python-slugify==5.0.2
 PyYAML==5.4.1
 waitress==2.0.0
-Werkzeug==2.0.1
+Werkzeug==2.2.3
 wtf-peewee==3.0.2
 WTForms==2.3.3
 feedgen==0.9.0
